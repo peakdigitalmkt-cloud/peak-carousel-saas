@@ -8,6 +8,7 @@ interface Slide {
   tag: string;
   title: string;
   desc: string;
+  photo?: string;
 }
 
 interface CarouselData {
@@ -38,10 +39,18 @@ export default function Home() {
   const [isConnected, setIsConnected] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
   const [totalTabs, setTotalTabs] = useState(1);
+  const [savedImages, setSavedImages] = useState<{logo: string[], photos: string[]}>({ logo: [], photos: [] });
 
   React.useEffect(() => {
     const saved = localStorage.getItem('peak_asana_token');
     if (saved) setAsanaToken(saved);
+    
+    const savedImgs = localStorage.getItem('peak_saved_images');
+    if (savedImgs) {
+      try {
+        setSavedImages(JSON.parse(savedImgs));
+      } catch {}
+    }
   }, []);
 
   const [data, setData] = useState<CarouselData>({
@@ -63,6 +72,17 @@ export default function Home() {
     setTotalTabs(tabs);
     if (activeTab >= tabs) setActiveTab(Math.max(0, tabs - 1));
   }, [data.slides.length]);
+
+  const saveImageToStorage = (type: 'logo' | 'photos', imageData: string) => {
+    const newImages = { ...savedImages };
+    if (type === 'logo') {
+      newImages.logo = [imageData, ...newImages.logo.filter(i => i !== imageData)].slice(0, 10);
+    } else {
+      newImages.photos = [imageData, ...newImages.photos.filter(i => i !== imageData)].slice(0, 20);
+    }
+    setSavedImages(newImages);
+    localStorage.setItem('peak_saved_images', JSON.stringify(newImages));
+  };
 
   const fetchAsanaTask = async () => {
     if (!asanaUrl) return alert('Cole a URL da tarefa do Asana primeiro.');
@@ -100,24 +120,37 @@ export default function Home() {
 
       // Parse description to extract slides
       const notes = task.notes || '';
-      const lines = notes.split('\n').filter((l: string) => l.trim());
+      const slideSections = notes.split(/(?=Slide \d+:|SLIDE \d+:|^\d+\.)/i).filter((s: string) => s.trim());
       
-      // Extract slide info from description
       let extractedSlides: Slide[] = [];
-      if (lines.length > 0) {
-        // First line is title
-        const title = task.name;
-        const desc = lines.slice(0, 3).join('\n');
-        
-        // Try to parse structured content
+      
+      if (slideSections.length > 1) {
+        // Parse structured slides from description
+        extractedSlides = slideSections.slice(0, 10).map((section: string, i: number) => {
+          const lines = section.split('\n').filter(l => l.trim());
+          const tagLine = lines[0] || '';
+          const title = lines[1] || tagLine.replace(/^(Slide \d+:|SLIDE \d+:|\d+\.)/i, '').trim() || `Slide ${i + 1}`;
+          const desc = lines.slice(2).join('\n') || lines.slice(1).join(' ');
+          return { tag: i === 0 ? 'GANCHO' : `SLIDE ${i + 1}`, title, desc };
+        });
+      } else {
+        // Fallback: split by lines or paragraphs
+        const paragraphs = notes.split(/\n\n+/).filter((p: string) => p.trim());
         extractedSlides = [
-          { tag: 'GANCHO', title, desc },
-          ...lines.slice(1, 7).map((line: string, i: number) => ({
-            tag: `SLIDE ${i + 2}`,
-            title: line.substring(0, 50),
-            desc: line,
-          }))
+          { tag: 'GANCHO', title: task.name, desc: paragraphs[0] || '' },
+          ...paragraphs.slice(1, 7).map((p: string, i: number) => {
+            const lines = p.split('\n');
+            return {
+              tag: `SLIDE ${i + 2}`,
+              title: lines[0]?.substring(0, 50) || `Slide ${i + 2}`,
+              desc: p
+            };
+          })
         ];
+      }
+      
+      if (extractedSlides.length === 0) {
+        extractedSlides = [...DEFAULT_SLIDES];
       }
       
       setData({
@@ -245,22 +278,84 @@ export default function Home() {
                   </div>
                 </div>
                 <div>
-                  <label className="peak-ui-label">Upload da Logo (PNG)</label>
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    className="w-full text-sm text-[var(--text-muted)] file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-[var(--accent)] file:text-white hover:file:bg-[var(--accent-hover)] cursor-pointer"
-                    onChange={e => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        const reader = new FileReader();
-                        reader.onload = (ev) => {
-                          setData({...data, logo: ev.target?.result as string});
-                        };
-                        reader.readAsDataURL(file);
-                      }
-                    }}
-                  />
+                  <label className="peak-ui-label">Logo da Marca</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="w-full text-xs text-[var(--text-muted)] file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-[var(--accent)] file:text-white hover:file:bg-[var(--accent-hover)] cursor-pointer"
+                        onChange={e => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (ev) => {
+                              const imgData = ev.target?.result as string;
+                              setData({...data, logo: imgData});
+                              saveImageToStorage('logo', imgData);
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                      {/* Galeria de logos salvos */}
+                      {savedImages.logo.length > 0 && (
+                        <div className="mt-2 flex gap-1 flex-wrap">
+                          {savedImages.logo.slice(0, 5).map((img, i) => (
+                            <button
+                              key={i}
+                              onClick={() => setData({...data, logo: img})}
+                              className="w-10 h-10 rounded border border-[var(--border)] overflow-hidden hover:border-[var(--accent)] transition-colors"
+                            >
+                              <img src={img} alt="" className="w-full h-full object-cover" />
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="peak-ui-label">Fotos do Carrossel</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        multiple
+                        className="w-full text-xs text-[var(--text-muted)] file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-[var(--border)] file:text-white hover:file:bg-[var(--text-muted)] cursor-pointer"
+                        onChange={e => {
+                          const files = e.target.files;
+                          if (files) {
+                            Array.from(files).forEach(file => {
+                              const reader = new FileReader();
+                              reader.onload = (ev) => {
+                                const imgData = ev.target?.result as string;
+                                setData({...data, heroPhoto: imgData});
+                                saveImageToStorage('photos', imgData);
+                              };
+                              reader.readAsDataURL(file);
+                            });
+                          }
+                        }}
+                      />
+                      {/* Galeria de fotos salvas */}
+                      {savedImages.photos.length > 0 && (
+                        <div className="mt-2 flex gap-1 flex-wrap">
+                          {savedImages.photos.slice(0, 8).map((img, i) => (
+                            <button
+                              key={i}
+                              onClick={() => setData({...data, heroPhoto: img})}
+                              className="w-10 h-10 rounded border border-[var(--border)] overflow-hidden hover:border-[var(--accent)] transition-colors"
+                            >
+                              <img src={img} alt="" className="w-full h-full object-cover" />
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
