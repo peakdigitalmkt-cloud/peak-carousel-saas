@@ -45,7 +45,6 @@ const DEFAULT_SLIDES: Slide[] = [
 export default function Home() {
   const [asanaUrl, setAsanaUrl] = useState('');
   const [asanaToken, setAsanaToken] = useState('');
-  const [geminiToken, setGeminiToken] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
@@ -56,9 +55,6 @@ export default function Home() {
   React.useEffect(() => {
     const saved = localStorage.getItem('peak_asana_token');
     if (saved) setAsanaToken(saved);
-    
-    const gemini = localStorage.getItem('peak_gemini_token');
-    if (gemini) setGeminiToken(gemini);
     
     const savedImgs = localStorage.getItem('peak_saved_images');
     if (savedImgs) {
@@ -100,33 +96,27 @@ export default function Home() {
   };
 
   const generateWithAI = async (text: string) => {
-    if (!geminiToken) {
-      alert('Cole sua API Key do Gemini no campo abaixo primeiro.');
-      return null;
-    }
-    
-    localStorage.setItem('peak_gemini_token', geminiToken);
     setIsAiGenerating(true);
     
     try {
       const res = await fetch('/api/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, token: geminiToken })
+        body: JSON.stringify({ text })
       });
       
       const result = await res.json();
       setIsAiGenerating(false);
       
       if (result.error) {
-        alert(`Erro IA: ${result.error}`);
+        console.error('Erro IA:', result.error);
         return null;
       }
       
       return result.slides || result;
     } catch (err) {
       setIsAiGenerating(false);
-      alert('Erro ao conectar com a API Gemini.');
+      console.error('Erro ao conectar com a API Gemini:', err);
       return null;
     }
   };
@@ -166,17 +156,15 @@ export default function Home() {
       if (!task) return alert('Tarefa não encontrada.');
 
       // Try AI generation first
-      if (geminiToken) {
-        const aiSlides = await generateWithAI(task.notes || task.name);
-        if (aiSlides && Array.isArray(aiSlides)) {
-          setData({
-            ...data,
-            brandName: task.name.split(' - ')[0] || 'Peak MKT',
-            slides: aiSlides,
-          });
-          setIsConnected(true);
-          return;
-        }
+      const aiSlides = await generateWithAI(task.notes || task.name);
+      if (aiSlides && Array.isArray(aiSlides)) {
+        setData({
+          ...data,
+          brandName: task.name.split(' - ')[0] || 'Peak MKT',
+          slides: aiSlides,
+        });
+        setIsConnected(true);
+        return;
       }
       
       // Fallback: manual parsing
@@ -313,17 +301,6 @@ export default function Home() {
                 onChange={e => setAsanaToken(e.target.value)} 
                 className="peak-ui-input mb-4" 
                 placeholder="1/123456789..." 
-              />
-              
-              <label className="peak-ui-label flex items-center gap-2 mb-3">
-                <Sparkles size={16} /> API Key Gemini (IA - Grátis)
-              </label>
-              <input 
-                type="password"
-                value={geminiToken} 
-                onChange={e => setGeminiToken(e.target.value)} 
-                className="peak-ui-input mb-4" 
-                placeholder="AIza..." 
               />
               
               <label className="peak-ui-label flex items-center gap-2 mb-3">

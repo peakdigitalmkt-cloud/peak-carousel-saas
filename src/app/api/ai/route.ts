@@ -94,10 +94,12 @@ SE o conteúdo não tiver itens suficientes para feature-list ou pills, use plac
 
 export async function POST(req: Request) {
   try {
-    const { text, token } = await req.json();
+    const { text } = await req.json();
     
-    if (!token) {
-      return NextResponse.json({ error: 'Gemini API key não configurada' }, { status: 400 });
+    const apiKey = process.env.GEMINI_API_KEY;
+    
+    if (!apiKey) {
+      return NextResponse.json({ error: 'Gemini API key não configurada no servidor' }, { status: 500 });
     }
     
     if (!text) {
@@ -105,7 +107,7 @@ export async function POST(req: Request) {
     }
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${token}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
