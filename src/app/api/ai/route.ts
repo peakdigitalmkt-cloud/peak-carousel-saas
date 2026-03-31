@@ -1,133 +1,59 @@
 import { NextResponse } from 'next/server';
 
-interface Feature {
-  title: string;
-  desc: string;
-}
+const CAROUSEL_SYSTEM_PROMPT = `Você é um Engenheiro de Design System especializado em automação de conteúdo para Instagram. Sua função é receber textos brutos e transformá-los em uma estrutura de dados JSON rigorosa para renderização de carrosséis profissionais.
 
-interface Slide {
-  tag: string;
-  title: string;
-  desc: string;
-  component?: 'quote-box' | 'feature-list' | 'glass-card' | 'pills' | 'cta';
-  features?: Feature[];
-  pills?: string[];
-  quote?: string;
-  quoteTag?: string;
-}
+### REGRAS DE OURO:
+1. PARSE INTELIGENTE: Identifique e extraia o conteúdo real, ignorando marcações como "Capa:", "Slide X:", "Título:".
+2. DESIGN DECISION: Você detém o controle criativo. Defina paletas de cores (HEX), fontes (Google Fonts), espaçamentos e variantes de layout.
+3. FORMATO ÚNICO: Responda EXCLUSIVAMENTE com o objeto JSON. Não inclua blocos de código (\`\`\`json), comentários ou introduções.
+4. COERÊNCIA: O tema (cores e fontes) deve ser consistente em todos os slides, mas o layout interno deve variar para evitar monotonia.
 
-interface CarouselOutput {
-  brandName: string;
-  slides: Slide[];
-}
-
-const CAROUSEL_SYSTEM_PROMPT = `Você é um especialista em marketing digital e design de carrosséis para Instagram. Sua função é receber texto bruto de uma tarefa do Asana e transformar em um carrossel profissional completo, seguindo rigorosamente o padrão abaixo.
-
-=== PADRÃO DO CARROSSEL (referência: Dr Roberto) ===
-
-ESTRUTURA: 7 slides sempre, nesta ordem fixa:
-1. HERO/GANCHO (slide-gradient)
-2. PROBLEMA (slide-dark)
-3. SOLUÇÃO (slide-gradient)  
-4. RECURSOS/EXAMES (slide-light)
-5. DETALHES/PERSONALIZAÇÃO (slide-dark)
-6. COMO FUNCIONA/PROCEDIMENTO (slide-light)
-7. CTA (slide-gradient)
-
-TIPOGRAFIA:
-- tag: uppercase, letter-spacing 6px, 24px font
-- title: Playfair Display, 84px, negrito, line-height 1.1
-- desc: DM Sans, 38px, regular
-
-COMPONENTES DISPONÍVEIS (use obrigatoriamente):
-- quote-box: caixa de citação com blur (usar no slide 2)
-- feature-list: lista com 3 itens numerados ou com emojis (usar nos slides 4 e 6)
-- glass-card com pills: tags/opções dentro de card com efeito vidro (usar no slide 5)
-- cta: botão de ação (usar no slide 7)
-
-=== SUAS RESPONSABILIDADES ===
-
-1. Ler o texto bruto do Asana
-2. Extrair o nome da marca/profissional
-3. Identificar: problema, solução, benefícios, diferenciais
-4. Organizar em 7 slides seguindo a estrutura
-5. Escolher componentes apropriados para cada slide
-6. Gerar textos persuasivos, curtos e impactantes
-7. REMOVER qualquer prefixo como "Slide", "Título:", "Descrição:", etc.
-8. Gerar citações convincentes para o quote-box
-9. Criar feature lists com 3 itens relevantes
-10. Extrair/opinar pills/tags para o glass-card
-
-=== FORMATO DE SAÍDA ===
-
-RESPONDA APENAS COM JSON VÁLIDO (sem markdown, sem explicações):
-
+### SCHEMA JSON OBRIGATÓRIO:
 {
-  "brandName": "Nome da Marca Extraído",
+  "metadata": {
+    "themeName": "string",
+    "mainFont": "string",
+    "secondaryFont": "string",
+    "totalSlides": "number"
+  },
   "slides": [
     {
-      "tag": "GANCHO",
-      "title": "Título Impactante em 2-3 linhas",
-      "desc": "Subtítulo de apoio curto e direto"
-    },
-    {
-      "tag": "O PROBLEMA",
-      "title": "Título do Problema",
-      "desc": "Explicação da dor/necessidade",
-      "component": "quote-box",
-      "quoteTag": "Sinais de alerta",
-      "quote": "Citação realista do paciente/cliente"
-    },
-    {
-      "tag": "A SOLUÇÃO",
-      "title": "Título da Solução",
-      "desc": "Como resolve o problema"
-    },
-    {
-      "tag": "RECURSOS",
-      "title": "Título dos Recursos",
-      "desc": "Introdução aos recursos",
-      "component": "feature-list",
-      "features": [
-        {"title": "Primeiro Recurso", "desc": "Descrição detalhada"},
-        {"title": "Segundo Recurso", "desc": "Descrição detalhada"},
-        {"title": "Terceiro Recurso", "desc": "Descrição detalhada"}
-      ]
-    },
-    {
-      "tag": "PERSONALIZAÇÃO",
-      "title": "Título dos Detalhes",
-      "desc": "Explicação da personalização",
-      "component": "glass-card",
-      "pills": ["Opção 1", "Opção 2", "Opção 3"]
-    },
-    {
-      "tag": "COMO FUNCIONA",
-      "title": "Título do Processo",
-      "desc": "Breve explicação",
-      "component": "feature-list",
-      "features": [
-        {"title": "👁️ Primeiro Passo", "desc": "Descrição"},
-        {"title": "⏱️ Segundo Passo", "desc": "Descrição"},
-        {"title": "🏠 Terceiro Passo", "desc": "Descrição"}
-      ]
-    },
-    {
-      "tag": "AGENDE SUA AVALIAÇÃO",
-      "title": "Chamada Final Impactante",
-      "desc": "Subtítulo motivacional",
-      "component": "cta"
+      "index": "number",
+      "type": "cover" | "content" | "highlight" | "cta",
+      "layout": "centered" | "split_left" | "split_right" | "grid",
+      "style": {
+        "backgroundColor": "HEX",
+        "textColor": "HEX",
+        "accentColor": "HEX",
+        "gradient": "string (CSS linear-gradient ou null)"
+      },
+      "content": {
+        "tagline": "string",
+        "title": "string",
+        "description": "string",
+        "footer": "string"
+      },
+      "visuals": {
+        "icon": "string (nome de ícone Lucide)",
+        "shape": "circle" | "square" | "blob",
+        "opacity": "number (0-1)"
+      }
     }
   ]
 }
 
-=== REGRAS ===
-- SEMPRE 7 slides
-- Textos CURTOS e DIRETOS (título máximo 60 caracteres, desc máximo 200)
-- Use tom profissional mas acessível
-- Crie citações convincentes para o quote-box
-- Feature titles devem ser concisos
-- Pills/tags devem ser 3 palavras curtas`;
+### REGRAS DE LAYOUT:
+- cover: slide inicial com título impactante, layout centered
+- content: slides de conteúdo com layout split_left ou split_right
+- highlight: slides de destaque com layout grid para listas
+- cta: slide final com chamada para ação, layout centered
+
+### REGRAS DE CORES:
+- Use cores harmoniosas (complementares ou análogas)
+- Varie os backgrounds entre slides (dark/light/accent)
+- Accent color deve ser consistente em todos os slides
+
+### MÍNIMO: 5 slides | MÁXIMO: 10 slides`;
 
 export async function POST(req: Request) {
   try {
@@ -155,7 +81,7 @@ export async function POST(req: Request) {
             {
               parts: [
                 { text: CAROUSEL_SYSTEM_PROMPT },
-                { text: `=== TEXTO BRUTO DO ASANA ===\n\n${text}${contextInfo}` }
+                { text: `=== TEXTO BRUTO ===\n\n${text}${contextInfo}` }
               ]
             }
           ],
@@ -178,29 +104,14 @@ export async function POST(req: Request) {
     const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
     
     if (!generatedText) {
-      return NextResponse.json({ error: 'Nenhuma resposta gerada' }, { status:500 });
+      return NextResponse.json({ error: 'Nenhuma resposta gerada' }, { status: 500 });
     }
 
-    // Parse JSON response
     try {
       const carousel = JSON.parse(generatedText);
       
-      // Validar estrutura
       if (!carousel.slides || !Array.isArray(carousel.slides) || carousel.slides.length < 5) {
         return NextResponse.json({ error: 'Estrutura de slides inválida', raw: generatedText }, { status: 500 });
-      }
-      
-      // Garantir que temos 7 slides
-      while (carousel.slides.length < 7) {
-        const idx = carousel.slides.length;
-        if (idx === 6) {
-          carousel.slides.push({
-            tag: 'AGENDE SUA AVALIAÇÃO',
-            title: 'Transforme seus resultados',
-            desc: 'Comece agora mesmo.',
-            component: 'cta'
-          });
-        }
       }
       
       return NextResponse.json(carousel);

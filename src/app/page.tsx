@@ -4,29 +4,49 @@ import React, { useState, useRef } from 'react';
 import { toPng } from 'html-to-image';
 import { Download, Sparkles, Link2, Loader2 } from 'lucide-react';
 
-interface Feature {
+interface SlideStyle {
+  backgroundColor: string;
+  textColor: string;
+  accentColor: string;
+  gradient: string | null;
+}
+
+interface SlideContent {
+  tagline: string;
   title: string;
-  desc: string;
+  description: string;
+  footer: string;
+}
+
+interface SlideVisuals {
+  icon: string;
+  shape: 'circle' | 'square' | 'blob';
+  opacity: number;
 }
 
 interface Slide {
-  tag: string;
-  title: string;
-  desc: string;
-  component?: 'quote-box' | 'feature-list' | 'glass-card' | 'pills' | 'cta';
-  features?: Feature[];
-  pills?: string[];
-  quote?: string;
-  quoteTag?: string;
+  index: number;
+  type: 'cover' | 'content' | 'highlight' | 'cta';
+  layout: 'centered' | 'split_left' | 'split_right' | 'grid';
+  style: SlideStyle;
+  content: SlideContent;
+  visuals: SlideVisuals;
+}
+
+interface CarouselMetadata {
+  themeName: string;
+  mainFont: string;
+  secondaryFont: string;
+  totalSlides: number;
 }
 
 interface CarouselData {
-  brandName: string;
+  metadata: CarouselMetadata;
   slides: Slide[];
 }
 
 const EMPTY_STATE: CarouselData = {
-  brandName: '',
+  metadata: { themeName: '', mainFont: '', secondaryFont: '', totalSlides: 0 },
   slides: [],
 };
 
@@ -38,7 +58,6 @@ export default function Home() {
 
   const carouselRef = useRef<HTMLDivElement>(null);
 
-  // Load token from localStorage
   React.useEffect(() => {
     const saved = localStorage.getItem('peak_asana_token');
     if (saved) setAsanaToken(saved);
@@ -52,16 +71,14 @@ export default function Home() {
     localStorage.setItem('peak_asana_token', asanaToken);
     
     try {
-      // Extract task ID from URL
       const matches = asanaUrl.match(/\/(\d+)(\/f|\/)?$/) || asanaUrl.match(/\d{5,}/g);
       const taskId = matches ? matches[matches.length - 1].replace(/\//g, '') : null;
 
       if (!taskId) {
         setIsLoading(false);
-        return alert('URL inválida. Não foi possível encontrar o ID da tarefa do Asana.');
+        return alert('URL inválida.');
       }
 
-      // Fetch task from Asana
       const res = await fetch('/api/asana', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -81,16 +98,12 @@ export default function Home() {
         return alert('Tarefa não encontrada.');
       }
 
-      // Generate with AI
       const aiRes = await fetch('/api/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           text: task.notes || task.name,
-          context: {
-            taskName: task.name,
-            projectName: task.projects?.[0]?.name || '',
-          }
+          context: { taskName: task.name, projectName: task.projects?.[0]?.name || '' }
         })
       });
       
@@ -103,13 +116,13 @@ export default function Home() {
       
       if (aiResult.slides && Array.isArray(aiResult.slides)) {
         setCarousel({
-          brandName: aiResult.brandName || task.name.split(' - ')[0] || 'Peak MKT',
+          metadata: aiResult.metadata || { themeName: 'Default', mainFont: 'Playfair Display', secondaryFont: 'DM Sans', totalSlides: aiResult.slides.length },
           slides: aiResult.slides,
         });
       }
     } catch (err) {
       setIsLoading(false);
-      alert('Erro ao processar. Verifique o console.');
+      alert('Erro ao processar.');
       console.error(err);
     }
   };
@@ -148,6 +161,21 @@ export default function Home() {
 
   const hasSlides = carousel.slides.length > 0;
 
+  const getSlideBg = (slide: Slide) => {
+    if (slide.style.gradient) return { background: slide.style.gradient };
+    return { backgroundColor: slide.style.backgroundColor };
+  };
+
+  const getLayoutClass = (layout: string) => {
+    switch (layout) {
+      case 'centered': return 'slide-center';
+      case 'split_left': return 'slide-split-left';
+      case 'split_right': return 'slide-split-right';
+      case 'grid': return 'slide-grid';
+      default: return '';
+    }
+  };
+
   return (
     <div className="flex w-full h-screen font-sans">
       {/* SIDEBAR */}
@@ -158,7 +186,7 @@ export default function Home() {
           </div>
           <div>
             <h2 className="text-xl font-bold">Peak Carousel</h2>
-            <p className="text-xs text-[var(--text-muted)]">Powered by AI</p>
+            <p className="text-xs text-[var(--text-muted)]">Design System AI</p>
           </div>
         </div>
 
@@ -212,9 +240,11 @@ export default function Home() {
               <p className="text-sm text-green-400 font-medium">
                 ✓ {carousel.slides.length} slides gerados
               </p>
-              <p className="text-xs text-[var(--text-muted)] mt-1">
-                {carousel.brandName}
-              </p>
+              {carousel.metadata.themeName && (
+                <p className="text-xs text-[var(--text-muted)] mt-1">
+                  Tema: {carousel.metadata.themeName}
+                </p>
+              )}
             </div>
             
             <button 
@@ -235,7 +265,7 @@ export default function Home() {
       </div>
 
       {/* PREVIEW AREA */}
-      <div className="flex-1 overflow-auto p-12 bg-black/40">
+      <div className="flex-1 overflow-auto p-12 bg-[#1a1a1a]">
         {!hasSlides ? (
           <div className="h-full flex flex-col items-center justify-center text-center">
             <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-600/20 flex items-center justify-center mb-6">
@@ -245,96 +275,135 @@ export default function Home() {
               Cole o link do Asana
             </h3>
             <p className="text-[var(--text-muted)] max-w-md">
-              A IA vai ler a tarefa, organizar o conteúdo e gerar o carrossel completo automaticamente.
+              A IA vai ler a tarefa, criar o design system e gerar o carrossel completo.
             </p>
           </div>
         ) : (
           <div className="flex gap-10" ref={carouselRef}>
             {carousel.slides.map((slide, idx) => {
-              const isFirst = idx === 0;
               const isLast = idx === carousel.slides.length - 1;
               const progressPct = ((idx + 1) / carousel.slides.length) * 100;
-              
-              const slidePattern = ['slide-gradient', 'slide-dark', 'slide-gradient', 'slide-light', 'slide-dark', 'slide-light', 'slide-gradient'];
-              const slideClass = slidePattern[idx % slidePattern.length];
-              const alignClass = isFirst ? 'slide-bottom' : isLast ? 'slide-center' : '';
+              const layoutClass = getLayoutClass(slide.layout);
               
               return (
-                <div key={idx} className="relative shrink-0 w-[540px] h-[675px] rounded-[20px] shadow-[0_20px_50px_rgba(0,0,0,0.5)] bg-black overflow-hidden">
+                <div key={idx} className="relative shrink-0 w-[540px] h-[675px] rounded-[20px] shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden">
                   <div 
-                    className={`slide ${slideClass} ${alignClass}`}
-                    style={{ transform: 'scale(0.5)', transformOrigin: 'top left' }}
+                    className={`slide ${layoutClass}`}
+                    style={{ 
+                      transform: 'scale(0.5)', 
+                      transformOrigin: 'top left',
+                      ...getSlideBg(slide),
+                      color: slide.style.textColor,
+                      fontFamily: slide.type === 'cover' || slide.type === 'cta' 
+                        ? carousel.metadata.mainFont 
+                        : carousel.metadata.secondaryFont
+                    }}
                   >
-                    {/* Watermark */}
-                    <div className="watermark" />
-                    
-                    {/* Logo */}
-                    <div className="slide-logo" style={isLast ? { position: 'relative', top: 0, left: 0, justifyContent: 'center', marginBottom: 60 } : {}}>
-                      <div className="logo-circle">
-                        <span className="logo-initial">{carousel.brandName.charAt(0)}</span>
-                      </div>
-                      <div className="logo-text">{carousel.brandName}</div>
-                    </div>
+                    {/* Visual Element */}
+                    {slide.visuals.shape === 'circle' && (
+                      <div 
+                        className="absolute w-[400px] h-[400px] rounded-full opacity-20"
+                        style={{ 
+                          background: slide.style.accentColor,
+                          top: '10%',
+                          right: '-10%',
+                          opacity: slide.visuals.opacity
+                        }}
+                      />
+                    )}
                     
                     {/* Content */}
-                    <div style={isFirst ? {} : { marginTop: 'auto', marginBottom: 20 }}>
-                      <span className="slide-tag">{slide.tag}</span>
-                      <h2 className="slide-title whitespace-pre-wrap">{slide.title}</h2>
-                      <p className="slide-content-text max-w-[800px]">{slide.desc}</p>
+                    <div className={layoutClass === 'slide-center' ? 'text-center items-center' : ''}>
+                      {slide.content.tagline && (
+                        <span 
+                          className="text-xs font-bold tracking-[3px] uppercase mb-6 block"
+                          style={{ color: slide.style.accentColor }}
+                        >
+                          {slide.content.tagline}
+                        </span>
+                      )}
+                      
+                      <h2 
+                        className="font-bold mb-6 whitespace-pre-wrap"
+                        style={{ 
+                          fontFamily: carousel.metadata.mainFont,
+                          fontSize: slide.type === 'cover' ? '84px' : '64px',
+                          lineHeight: 1.1,
+                          letterSpacing: '-2px'
+                        }}
+                      >
+                        {slide.content.title}
+                      </h2>
+                      
+                      {slide.content.description && (
+                        <p 
+                          className="opacity-80 leading-relaxed"
+                          style={{ 
+                            fontFamily: carousel.metadata.secondaryFont,
+                            fontSize: '28px',
+                            maxWidth: '800px'
+                          }}
+                        >
+                          {slide.content.description}
+                        </p>
+                      )}
+                      
+                      {slide.content.footer && (
+                        <p 
+                          className="mt-8 opacity-60 text-sm"
+                          style={{ fontFamily: carousel.metadata.secondaryFont }}
+                        >
+                          {slide.content.footer}
+                        </p>
+                      )}
                     </div>
                     
-                    {/* Quote Box */}
-                    {slide.component === 'quote-box' && (
-                      <div className="quote-box">
-                        <p className="quote-tag">{slide.quoteTag || 'Destaque'}</p>
-                        <p className="quote-text">&ldquo;{slide.quote || 'Citação aqui'}&rdquo;</p>
-                      </div>
-                    )}
-                    
-                    {/* Feature List */}
-                    {slide.component === 'feature-list' && slide.features && (
-                      <div className="feature-list" style={{ marginTop: 60 }}>
-                        {slide.features.map((f, fi) => (
-                          <div key={fi} className="feature-item">
-                            <div className="feature-icon">{String(fi + 1).padStart(2, '0')}</div>
-                            <div>
-                              <div className="feature-title">{f.title}</div>
-                              <div className="feature-desc">{f.desc}</div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    
-                    {/* Glass Card */}
-                    {slide.component === 'glass-card' && slide.pills && (
-                      <div className="glass-card" style={{ padding: 40 }}>
-                        {slide.pills.map((p, pi) => (
-                          <span key={pi} className="pill">{p}</span>
-                        ))}
-                      </div>
-                    )}
-                    
-                    {/* CTA */}
-                    {slide.component === 'cta' && (
-                      <div className="cta-button">
+                    {/* CTA Button */}
+                    {slide.type === 'cta' && (
+                      <div 
+                        className="mt-12 inline-flex items-center gap-3 px-10 py-5 rounded-full font-semibold text-lg"
+                        style={{ 
+                          backgroundColor: slide.style.accentColor,
+                          color: slide.style.backgroundColor
+                        }}
+                      >
                         Agendar via WhatsApp →
                       </div>
                     )}
                     
                     {/* Progress Bar */}
-                    <div className="progress-bar">
-                      <div className="progress-track">
-                        <div className="progress-fill" style={{ width: `${progressPct}%` }} />
+                    <div className="absolute bottom-0 left-0 right-0 px-8 py-6 flex items-center gap-4">
+                      <div 
+                        className="flex-1 h-1 rounded-full overflow-hidden"
+                        style={{ backgroundColor: `${slide.style.textColor}15` }}
+                      >
+                        <div 
+                          className="h-full rounded-full"
+                          style={{ 
+                            width: `${progressPct}%`,
+                            backgroundColor: slide.style.accentColor
+                          }}
+                        />
                       </div>
-                      <span className="progress-label">{idx + 1}/{carousel.slides.length}</span>
+                      <span 
+                        className="text-xs font-medium opacity-50"
+                        style={{ fontFamily: carousel.metadata.secondaryFont }}
+                      >
+                        {idx + 1}/{carousel.slides.length}
+                      </span>
                     </div>
                     
                     {/* Swipe Arrow */}
                     {!isLast && (
-                      <div className="swipe-arrow">
+                      <div 
+                        className="absolute right-0 top-0 bottom-0 w-20 flex items-center justify-center"
+                        style={{ 
+                          background: `linear-gradient(to right, transparent, ${slide.style.textColor}08)`,
+                          color: `${slide.style.textColor}40`
+                        }}
+                      >
                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
-                          <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       </div>
                     )}
