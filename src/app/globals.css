@@ -56,14 +56,14 @@ body {
   @apply inline-flex items-center justify-center gap-2 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white border-none px-6 py-3 rounded-lg font-semibold text-sm transition-all active:scale-95 cursor-pointer;
 }
 
-/* CARROSSEL (RENDER EXATO 1080x1350) - Estética Instagram */
+/* CARROSSEL - Estética Profissional Instagram */
 .slide {
   width: 1080px;
   height: 1350px;
   flex-shrink: 0;
   position: relative;
   box-sizing: border-box;
-  padding: 60px 80px;
+  padding: 100px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -80,7 +80,7 @@ body {
 }
 
 .slide-gradient {
-  background: linear-gradient(165deg, var(--brand-dark) 0%, var(--brand-primary) 50%, var(--brand-light) 100%);
+  background: linear-gradient(145deg, var(--brand-dark) 0%, var(--brand-primary) 60%, var(--brand-light) 100%);
   color: #fff;
 }
 
@@ -90,52 +90,52 @@ body {
   position: absolute;
   inset: 0;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  opacity: 0.03;
+  opacity: 0.025;
   pointer-events: none;
   z-index: 1;
 }
 
 .slide-center { justify-content: center; text-align: center; align-items: center; }
-.slide-bottom { justify-content: flex-end; padding-bottom: 60px; }
+.slide-bottom { justify-content: flex-end; padding-bottom: 70px; }
 
-/* Tipografia conforme SKILL carrossel-instagram */
+/* Tipografia profissional */
 .slide-tag {
   font-family: 'DM Sans', sans-serif;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 2px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 3px;
   text-transform: uppercase;
-  margin-bottom: 16px;
+  margin-bottom: 24px;
   color: var(--brand-light);
   display: inline-block;
   position: relative;
   z-index: 5;
 }
 .slide-light .slide-tag { color: var(--brand-primary); }
-.slide-gradient .slide-tag { color: rgba(255,255,255,0.6); }
+.slide-gradient .slide-tag { color: rgba(255,255,255,0.7); }
 
 .slide-title {
   font-family: 'Playfair Display', serif;
-  font-size: 32px;
-  font-weight: 600;
-  line-height: 1.15;
-  letter-spacing: -0.3px;
-  margin: 0 0 16px 0;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -1px;
+  margin: 0 0 24px 0;
   position: relative;
   z-index: 5;
 }
 
 .slide-text {
   font-family: 'DM Sans', sans-serif;
-  font-size: 14px;
-  line-height: 1.55;
+  font-size: 18px;
+  line-height: 1.6;
   font-weight: 400;
-  opacity: 0.85;
+  opacity: 0.9;
   position: relative;
   z-index: 5;
 }
-.slide-light .slide-text { opacity: 0.8; color: var(--brand-dark); }
-.slide-gradient .slide-text { color: rgba(255,255,255,0.7); }
+.slide-light .slide-text { opacity: 0.85; color: var(--brand-dark); }
+.slide-gradient .slide-text { color: rgba(255,255,255,0.8); }
 
 .photo-mask {
   position: absolute;
@@ -149,36 +149,36 @@ body {
 .photo-overlay-dark {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(9,26,36,0) 0%, rgba(9,26,36,0.95) 80%, rgba(9,26,36,1) 100%);
+  background: linear-gradient(180deg, rgba(9,26,36,0) 0%, rgba(9,26,36,0.85) 70%, rgba(9,26,36,1) 100%);
   z-index: 1;
 }
 
 .watermark {
   position: absolute;
-  bottom: -50px;
-  right: -50px;
-  width: 600px;
-  height: 600px;
+  bottom: -30px;
+  right: -30px;
+  width: 500px;
+  height: 500px;
   background-size: cover;
   background-position: center;
-  opacity: 0.04;
+  opacity: 0.03;
   z-index: 0;
   pointer-events: none;
 }
-.slide-light .watermark { opacity: 0.03; mix-blend-mode: multiply; }
+.slide-light .watermark { opacity: 0.02; mix-blend-mode: multiply; }
 
 .slide-logo {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   position: absolute;
-  top: 50px;
-  left: 80px;
+  top: 60px;
+  left: 100px;
   z-index: 10;
 }
 .logo-circle {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background-color: var(--brand-primary);
   background-size: cover;
@@ -186,12 +186,14 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 .logo-text {
   font-family: 'DM Sans', sans-serif;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
   color: inherit;
 }
 
@@ -203,8 +205,8 @@ body {
   align-items: center;
   justify-content: center;
   font-family: 'DM Sans', sans-serif;
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 700;
   color: #fff;
 }
 
@@ -212,40 +214,40 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 28px;
+  padding: 16px 32px;
   background: var(--light-bg);
-  color: var(--brand-dark);
+  color: var(--brand-primary);
   font-family: 'DM Sans', sans-serif;
   font-weight: 600;
-  font-size: 14px;
-  border-radius: 28px;
-  margin-top: 20px;
-  box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+  font-size: 16px;
+  border-radius: 30px;
+  margin-top: 30px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
   position: relative;
   z-index: 5;
 }
 
-/* Barra de Progresso conforme SKILL */
+/* Barra de Progresso */
 .progress-bar {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 16px 28px 20px;
+  padding: 20px 36px 24px;
   z-index: 10;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .progress-track {
   flex: 1;
-  height: 3px;
+  height: 4px;
   border-radius: 2px;
   overflow: hidden;
 }
-.slide-light .progress-track { background: rgba(0,0,0,0.08); }
-.slide-dark .progress-track, .slide-gradient .progress-track { background: rgba(255,255,255,0.12); }
+.slide-light .progress-track { background: rgba(0,0,0,0.1); }
+.slide-dark .progress-track, .slide-gradient .progress-track { background: rgba(255,255,255,0.15); }
 
 .progress-fill {
   height: 100%;
@@ -256,40 +258,40 @@ body {
 .slide-dark .progress-fill, .slide-gradient .progress-fill { background: #fff; }
 
 .progress-label {
-  font-size: 11px;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 600;
   font-family: 'DM Sans', sans-serif;
-  min-width: 28px;
+  min-width: 32px;
   text-align: right;
 }
-.slide-light .progress-label { color: rgba(0,0,0,0.3); }
-.slide-dark .progress-label, .slide-gradient .progress-label { color: rgba(255,255,255,0.4); }
+.slide-light .progress-label { color: rgba(0,0,0,0.4); }
+.slide-dark .progress-label, .slide-gradient .progress-label { color: rgba(255,255,255,0.5); }
 
-/* Seta de Arraste conforme SKILL */
+/* Seta de Arraste */
 .swipe-arrow {
   position: absolute;
   right: 0;
   top: 0;
   bottom: 0;
-  width: 48px;
+  width: 60px;
   z-index: 9;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .slide-light .swipe-arrow {
-  background: linear-gradient(to right, transparent, rgba(0,0,0,0.06));
-  color: rgba(0,0,0,0.25);
+  background: linear-gradient(to right, transparent, rgba(0,0,0,0.05));
+  color: rgba(0,0,0,0.2);
 }
 .slide-dark .swipe-arrow, .slide-gradient .swipe-arrow {
-  background: linear-gradient(to right, transparent, rgba(255,255,255,0.08));
-  color: rgba(255,255,255,0.35);
+  background: linear-gradient(to right, transparent, rgba(255,255,255,0.06));
+  color: rgba(255,255,255,0.3);
 }
 
 /* Photo overlay light */
 .photo-overlay-light {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(244,247,249,0) 0%, rgba(244,247,249,0.8) 80%, rgba(244,247,249,1) 100%);
+  background: linear-gradient(180deg, rgba(244,247,249,0) 0%, rgba(244,247,249,0.7) 70%, rgba(244,247,249,1) 100%);
   z-index: 1;
 }
