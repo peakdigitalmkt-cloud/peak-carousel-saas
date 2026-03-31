@@ -215,7 +215,7 @@ export default function Home() {
           >
             {isLoading ? (
               <>
-                <Loader2 size={18} className="animate-spin" /> Gerando com MiniMax AI...
+                <Loader2 size={18} className="animate-spin" /> Gerando com IA...
               </>
             ) : (
               <>
