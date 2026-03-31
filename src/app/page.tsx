@@ -509,47 +509,129 @@ export default function Home() {
               {data.slides.map((slide, idx) => {
                 const isFirst = idx === 0;
                 const isLast = idx === data.slides.length - 1;
-                const isGradient = isFirst || isLast;
                 const progressPct = ((idx + 1) / data.slides.length) * 100;
                 
-                // Alternância: hero (gradient), problema (dark), solução (gradient), recursos (light), detalhes (dark), como (light), cta (gradient)
+                // Padrão Dr Roberto: gradient, dark, gradient, light, dark, light, gradient
                 const getSlideClass = () => {
-                  if (isFirst || isLast) return 'slide-gradient';
-                  if (idx % 2 === 0) return 'slide-light';
-                  return 'slide-dark';
+                  const slidePattern = ['slide-gradient', 'slide-dark', 'slide-gradient', 'slide-light', 'slide-dark', 'slide-light', 'slide-gradient'];
+                  const patternIdx = idx % slidePattern.length;
+                  return slidePattern[patternIdx];
                 };
                 
+                const getAlign = () => {
+                  if (isFirst) return 'slide-bottom';
+                  if (isLast) return 'slide-center';
+                  return '';
+                };
+                
+                const slideClass = getSlideClass();
+                
                 return (
-                  <div key={idx} className="slide-wrapper relative w-[540px] h-[675px] shrink-0 overflow-hidden shadow-2xl rounded-sm">
+                  <div key={idx} className="relative shrink-0 w-[540px] h-[675px] rounded-[20px] shadow-[0_20px_50px_rgba(0,0,0,0.5)] bg-black overflow-hidden">
                     <div 
-                      className={`slide ${getSlideClass()} ${isFirst ? 'slide-bottom' : ''}`} 
+                      className={`slide ${slideClass} ${getAlign()}`} 
                       style={{ transform: 'scale(0.5)', transformOrigin: 'top left' }}
                     >
-                      {isFirst && data.heroPhoto && (
+                      {/* Photo Mask (Hero e último slide) */}
+                      {data.heroPhoto && (isFirst || isLast) && (
                         <>
                           <div className="photo-mask" style={{ backgroundImage: `url(${data.heroPhoto})` }} />
                           <div className="photo-overlay-dark" />
                         </>
                       )}
                       
+                      {/* Watermark */}
                       {data.logo && <div className="watermark" style={{ backgroundImage: `url(${data.logo})` }} />}
                       
-                      <div className="slide-logo">
-                        <div 
-                          className="logo-circle" 
-                          style={{ 
-                            backgroundImage: data.logo ? `url(${data.logo})` : 'none',
-                            backgroundColor: data.logo ? 'transparent' : data.colorPrimary
-                          }} 
-                        >
-                          {!data.logo && <span className="logo-initial">{data.brandName.charAt(0)}</span>}
+                      {/* Logo (primeiro slide ou CTA) */}
+                      {(isFirst || isLast) && (
+                        <div className="slide-logo" style={isLast ? { position: 'relative', top: 0, left: 0, justifyContent: 'center', marginBottom: 60 } : {}}>
+                          <div 
+                            className="logo-circle" 
+                            style={{ 
+                              backgroundImage: data.logo ? `url(${data.logo})` : 'none',
+                              backgroundColor: data.logo ? 'transparent' : data.colorPrimary
+                            }} 
+                          >
+                            {!data.logo && <span className="logo-initial">{data.brandName.charAt(0)}</span>}
+                          </div>
+                          <div className="logo-text">{data.brandName}</div>
                         </div>
-                        <div className="logo-text">{data.brandName}</div>
+                      )}
+                      
+                      {/* Logo para slides do meio */}
+                      {!isFirst && !isLast && (
+                        <div className="slide-logo">
+                          <div 
+                            className="logo-circle" 
+                            style={{ 
+                              backgroundImage: data.logo ? `url(${data.logo})` : 'none',
+                              backgroundColor: data.logo ? 'transparent' : data.colorPrimary
+                            }} 
+                          >
+                            {!data.logo && <span className="logo-initial">{data.brandName.charAt(0)}</span>}
+                          </div>
+                          <div className="logo-text">{idx + 1}. {slide.tag}</div>
+                        </div>
+                      )}
+                      
+                      {/* Conteúdo principal */}
+                      <div style={isFirst ? {} : { marginTop: 'auto', marginBottom: 20 }}>
+                        <span className="slide-tag">{slide.tag}</span>
+                        <h2 className="slide-title whitespace-pre-wrap">{slide.title}</h2>
+                        <p className="slide-content-text max-w-[800px]">{slide.desc}</p>
                       </div>
                       
-                      <span className="slide-tag">{slide.tag}</span>
-                      <h2 className="slide-title whitespace-pre-wrap">{slide.title}</h2>
-                      <p className="slide-text max-w-[800px]">{slide.desc}</p>
+                      {/* Quote Box (apenas slide 2) */}
+                      {idx === 1 && (
+                        <div className="quote-box">
+                          <p className="quote-tag">Sinais de alerta</p>
+                          <p className="quote-text">"Sua resposta pode estar aqui..."</p>
+                        </div>
+                      )}
+                      
+                      {/* Glass Card com Pills (slide 5) */}
+                      {idx === 4 && (
+                        <div className="glass-card" style={{ padding: 40 }}>
+                          <span className="pill">Opção 1</span>
+                          <span className="pill">Opção 2</span>
+                          <span className="pill">Opção 3</span>
+                        </div>
+                      )}
+                      
+                      {/* Feature List (slides 4 e 6) */}
+                      {(idx === 3 || idx === 5) && (
+                        <div className="feature-list" style={{ marginTop: 60 }}>
+                          <div className="feature-item">
+                            <div className="feature-icon">{idx === 5 ? '👁️' : '01'}</div>
+                            <div>
+                              <div className="feature-title">Primeiro Item</div>
+                              <div className="feature-desc">Descrição do primeiro item.</div>
+                            </div>
+                          </div>
+                          <div className="feature-item">
+                            <div className="feature-icon">{idx === 5 ? '⏱️' : '02'}</div>
+                            <div>
+                              <div className="feature-title">Segundo Item</div>
+                              <div className="feature-desc">Descrição do segundo item.</div>
+                            </div>
+                          </div>
+                          <div className="feature-item">
+                            <div className="feature-icon">{idx === 5 ? '🏠' : '03'}</div>
+                            <div>
+                              <div className="feature-title">Terceiro Item</div>
+                              <div className="feature-desc">Descrição do terceiro item.</div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* CTA Button (último slide) */}
+                      {isLast && (
+                        <div className="cta-button">
+                          Agendar via WhatsApp →
+                        </div>
+                      )}
                       
                       {/* Barra de Progresso */}
                       <div className="progress-bar">

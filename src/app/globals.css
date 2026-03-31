@@ -127,6 +127,18 @@ body {
   z-index: 5;
 }
 
+.slide-content-text {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 38px;
+  line-height: 1.5;
+  font-weight: 400;
+  opacity: 0.85;
+  position: relative;
+  z-index: 5;
+}
+.slide-light .slide-content-text { opacity: 0.8; color: var(--brand-dark); }
+.slide-gradient .slide-content-text { color: rgba(255,255,255,0.8); }
+
 .slide-text {
   font-family: 'DM Sans', sans-serif;
   font-size: 38px;
