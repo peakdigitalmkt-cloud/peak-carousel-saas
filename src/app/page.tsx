@@ -95,14 +95,14 @@ export default function Home() {
     localStorage.setItem('peak_saved_images', JSON.stringify(newImages));
   };
 
-  const generateWithAI = async (text: string) => {
+  const generateWithAI = async (text: string, context?: Record<string, unknown>) => {
     setIsAiGenerating(true);
     
     try {
       const res = await fetch('/api/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text })
+        body: JSON.stringify({ text, context })
       });
       
       const result = await res.json();
@@ -113,7 +113,8 @@ export default function Home() {
         return null;
       }
       
-      return result.slides || result;
+      // Now returns { brandName, slides } format
+      return result;
     } catch (err) {
       setIsAiGenerating(false);
       console.error('Erro ao conectar com a API Gemini:', err);
@@ -155,13 +156,22 @@ export default function Home() {
       const task = responseBody.data;
       if (!task) return alert('Tarefa não encontrada.');
 
-      // Try AI generation first
-      const aiSlides = await generateWithAI(task.notes || task.name);
-      if (aiSlides && Array.isArray(aiSlides)) {
+      // Try AI generation with full context
+      const aiResult = await generateWithAI(task.notes || task.name, {
+        taskName: task.name,
+        projectName: task.projects?.[0]?.name || '',
+        dueDate: task.due_on || '',
+        assignee: task.assignee?.name || '',
+        colorPrimary: data.colorPrimary,
+        colorLight: data.colorLight,
+        colorDark: data.colorDark
+      });
+      
+      if (aiResult && aiResult.slides && Array.isArray(aiResult.slides)) {
         setData({
           ...data,
-          brandName: task.name.split(' - ')[0] || 'Peak MKT',
-          slides: aiSlides,
+          brandName: aiResult.brandName || task.name.split(' - ')[0] || 'Peak MKT',
+          slides: aiResult.slides,
         });
         setIsConnected(true);
         return;
