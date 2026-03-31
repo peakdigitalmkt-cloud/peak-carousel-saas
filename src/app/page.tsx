@@ -1,38 +1,68 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { toPng } from 'html-to-image';
-import { Download, Upload, BriefcaseMedical, CheckCircle2, Link2 } from 'lucide-react';
+import { Download, Upload, BriefcaseMedical, CheckCircle2, Link2, ChevronLeft, ChevronRight, Plus, X } from 'lucide-react';
+
+interface Slide {
+  tag: string;
+  title: string;
+  desc: string;
+}
+
+interface CarouselData {
+  logo: string;
+  logoData: string;
+  brandName: string;
+  colorPrimary: string;
+  colorLight: string;
+  colorDark: string;
+  heroPhoto: string;
+  slides: Slide[];
+}
+
+const DEFAULT_SLIDES: Slide[] = [
+  { tag: 'GANCHO', title: 'Título Principal', desc: 'Breve descrição de apoio para retenção.' },
+  { tag: 'PROBLEMA', title: 'O problema', desc: 'Explicação detalhada da dor.' },
+  { tag: 'SOLUÇÃO', title: 'A resposta', desc: 'O que resolve o problema.' },
+  { tag: 'RECUROS', title: 'O que você recebe', desc: 'Lista de features e benefícios.' },
+  { tag: 'DETALHES', title: 'Profundidade', desc: 'Personalização e diferenciais.' },
+  { tag: 'COMO FUNCIONA', title: 'Passo a passo', desc: 'Fluxo de trabalho.' },
+  { tag: 'CTA', title: 'Chamada para ação', desc: 'último slide com CTA claro.' },
+];
 
 export default function Home() {
   const [asanaUrl, setAsanaUrl] = useState('');
   const [asanaToken, setAsanaToken] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
+  const [activeTab, setActiveTab] = useState(0);
+  const [totalTabs, setTotalTabs] = useState(1);
 
-  // Load token from local storage on mount
   React.useEffect(() => {
     const saved = localStorage.getItem('peak_asana_token');
     if (saved) setAsanaToken(saved);
   }, []);
 
-  // Carousel Data
-  const [data, setData] = useState({
+  const [data, setData] = useState<CarouselData>({
     logo: '',
+    logoData: '',
     brandName: 'Peak MKT',
     colorPrimary: '#1e3a5f',
     colorLight: '#8ed0f0',
     colorDark: '#091a24',
     heroPhoto: '',
-    heroTag: 'GANCHO',
-    heroTitle: 'Título Principal',
-    heroDesc: 'Breve descrição de apoio para retenção.',
-    slide2Tag: 'PROBLEMA',
-    slide2Title: 'O problema',
-    slide2Desc: 'Explicação detalhada da dor.',
+    slides: [...DEFAULT_SLIDES],
   });
 
   const carouselRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const slideCount = data.slides.length;
+    const tabs = Math.ceil(slideCount / 2);
+    setTotalTabs(tabs);
+    if (activeTab >= tabs) setActiveTab(Math.max(0, tabs - 1));
+  }, [data.slides.length]);
 
   const fetchAsanaTask = async () => {
     if (!asanaUrl) return alert('Cole a URL da tarefa do Asana primeiro.');
@@ -68,10 +98,32 @@ export default function Home() {
       const task = responseBody.data;
       if (!task) return alert('Tarefa não encontrada.');
 
+      // Parse description to extract slides
+      const notes = task.notes || '';
+      const lines = notes.split('\n').filter((l: string) => l.trim());
+      
+      // Extract slide info from description
+      let extractedSlides: Slide[] = [];
+      if (lines.length > 0) {
+        // First line is title
+        const title = task.name;
+        const desc = lines.slice(0, 3).join('\n');
+        
+        // Try to parse structured content
+        extractedSlides = [
+          { tag: 'GANCHO', title, desc },
+          ...lines.slice(1, 7).map((line: string, i: number) => ({
+            tag: `SLIDE ${i + 2}`,
+            title: line.substring(0, 50),
+            desc: line,
+          }))
+        ];
+      }
+      
       setData({
         ...data,
-        heroTitle: task.name,
-        heroDesc: task.notes?.split('\n')[0] || 'Descrição extraída da tarefa',
+        brandName: task.name.split(' - ')[0] || 'Peak MKT',
+        slides: extractedSlides.length > 0 ? extractedSlides : [...DEFAULT_SLIDES],
       });
       setIsConnected(true);
 
@@ -199,44 +251,111 @@ export default function Home() {
                     accept="image/*" 
                     className="w-full text-sm text-[var(--text-muted)] file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-[var(--accent)] file:text-white hover:file:bg-[var(--accent-hover)] cursor-pointer"
                     onChange={e => {
-                      if (e.target.files?.[0]) setData({...data, logo: URL.createObjectURL(e.target.files[0])});
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (ev) => {
+                          setData({...data, logo: ev.target?.result as string});
+                        };
+                        reader.readAsDataURL(file);
+                      }
                     }}
                   />
                 </div>
               </div>
             </div>
 
-            {/* Slides Editor */}
+            {/* Slides Editor com abas dinâmicas */}
             <div className="bg-[var(--background)] border border-[var(--border)] p-5 rounded-lg">
-              <h3 className="text-[13px] uppercase tracking-wider font-bold text-[var(--text-muted)] mb-4">Textos do Carrossel</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-[13px] uppercase tracking-wider font-bold text-[var(--text-muted)]">Textos do Carrossel</h3>
+                <button 
+                  onClick={() => setData({...data, slides: [...data.slides, { tag: 'SLIDE', title: 'Novo Slide', desc: 'Descrição' }]})}
+                  className="flex items-center gap-1 text-xs text-[var(--accent)] hover:text-[var(--accent-hover)]"
+                >
+                  <Plus size={14} /> Adicionar Slide
+                </button>
+              </div>
+              
+              {/* Abas dinâmicas */}
+              {totalTabs > 1 && (
+                <div className="flex items-center gap-1 mb-4 border-b border-[var(--border)] pb-2">
+                  {Array.from({ length: totalTabs }).map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setActiveTab(i)}
+                      className={`px-3 py-1.5 text-xs rounded transition-colors ${
+                        activeTab === i 
+                          ? 'bg-[var(--accent)] text-white' 
+                          : 'text-[var(--text-muted)] hover:text-[var(--text)]'
+                      }`}
+                    >
+                      Slides {i * 2 + 1}-{Math.min(i * 2 + 2, data.slides.length)}
+                    </button>
+                  ))}
+                </div>
+              )}
+              
               <div className="space-y-4">
-                <div>
-                  <label className="peak-ui-label">Capa: Tag</label>
-                  <input value={data.heroTag} onChange={e => setData({...data, heroTag: e.target.value})} className="peak-ui-input" />
-                </div>
-                <div>
-                  <label className="peak-ui-label">Capa: Título</label>
-                  <textarea value={data.heroTitle} onChange={e => setData({...data, heroTitle: e.target.value})} className="peak-ui-input h-20 resize-none" />
-                </div>
-                <div>
-                  <label className="peak-ui-label">Capa: Fundo</label>
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    className="w-full text-sm text-[var(--text-muted)] file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-[var(--border)] file:text-white"
-                    onChange={e => {
-                      if (e.target.files?.[0]) setData({...data, heroPhoto: URL.createObjectURL(e.target.files[0])});
-                    }}
-                  />
-                </div>
-                
-                <div className="border-t border-[var(--border)] pt-4 mt-4">
-                  <label className="peak-ui-label">Slide 2: Tag</label>
-                  <input value={data.slide2Tag} onChange={e => setData({...data, slide2Tag: e.target.value})} className="peak-ui-input mb-3" />
-                  
-                  <label className="peak-ui-label">Slide 2: Título</label>
-                  <textarea value={data.slide2Title} onChange={e => setData({...data, slide2Title: e.target.value})} className="peak-ui-input h-20 resize-none" />
-                </div>
+                {data.slides.slice(activeTab * 2, activeTab * 2 + 2).map((slide, idx) => {
+                  const globalIdx = activeTab * 2 + idx;
+                  return (
+                    <div key={globalIdx} className="border border-[var(--border)] rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-xs font-semibold text-[var(--accent)]">Slide {globalIdx + 1}</span>
+                        {data.slides.length > 2 && (
+                          <button 
+                            onClick={() => {
+                              const newSlides = data.slides.filter((_, i) => i !== globalIdx);
+                              setData({...data, slides: newSlides});
+                            }}
+                            className="text-[var(--text-muted)] hover:text-red-400"
+                          >
+                            <X size={14} />
+                          </button>
+                        )}
+                      </div>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="peak-ui-label text-xs">Tag</label>
+                          <input 
+                            value={slide.tag} 
+                            onChange={e => {
+                              const newSlides = [...data.slides];
+                              newSlides[globalIdx] = {...slide, tag: e.target.value};
+                              setData({...data, slides: newSlides});
+                            }} 
+                            className="peak-ui-input text-sm" 
+                          />
+                        </div>
+                        <div>
+                          <label className="peak-ui-label text-xs">Título</label>
+                          <textarea 
+                            value={slide.title} 
+                            onChange={e => {
+                              const newSlides = [...data.slides];
+                              newSlides[globalIdx] = {...slide, title: e.target.value};
+                              setData({...data, slides: newSlides});
+                            }} 
+                            className="peak-ui-input h-16 resize-none text-sm" 
+                          />
+                        </div>
+                        <div>
+                          <label className="peak-ui-label text-xs">Descrição</label>
+                          <textarea 
+                            value={slide.desc} 
+                            onChange={e => {
+                              const newSlides = [...data.slides];
+                              newSlides[globalIdx] = {...slide, desc: e.target.value};
+                              setData({...data, slides: newSlides});
+                            }} 
+                            className="peak-ui-input h-20 resize-none text-sm" 
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
@@ -265,42 +384,63 @@ export default function Home() {
             </div>
           ) : (
             <div className="flex gap-10" ref={carouselRef} style={themeVars}>
-              
-              {/* SLIDE 1 (DARK) */}
-              <div className="slide-wrapper relative w-[540px] h-[675px] shrink-0 overflow-hidden shadow-2xl rounded-sm">
-                <div className="slide slide-dark slide-bottom" style={{ transform: 'scale(0.5)', transformOrigin: 'top left' }}>
-                  {data.heroPhoto && <div className="photo-mask" style={{ backgroundImage: `url(${data.heroPhoto})` }} />}
-                  <div className="photo-overlay-dark" />
-                  {data.logo && <div className="watermark" style={{ backgroundImage: `url(${data.logo})` }} />}
-                  
-                  <div className="slide-logo">
-                    <div className="logo-circle" style={{ backgroundImage: data.logo ? `url(${data.logo})` : 'none' }} />
-                    <div className="logo-text">{data.brandName}</div>
+              {data.slides.map((slide, idx) => {
+                const isLight = idx % 2 === 0;
+                const isLast = idx === data.slides.length - 1;
+                const progressPct = ((idx + 1) / data.slides.length) * 100;
+                
+                return (
+                  <div key={idx} className="slide-wrapper relative w-[540px] h-[675px] shrink-0 overflow-hidden shadow-2xl rounded-sm">
+                    <div 
+                      className={`slide ${isLight ? 'slide-light' : 'slide-dark'} ${idx === 0 ? 'slide-bottom' : ''}`} 
+                      style={{ transform: 'scale(0.5)', transformOrigin: 'top left' }}
+                    >
+                      {idx === 0 && data.heroPhoto && (
+                        <>
+                          <div className="photo-mask" style={{ backgroundImage: `url(${data.heroPhoto})` }} />
+                          <div className={`photo-overlay-${isLight ? 'light' : 'dark'}`} />
+                        </>
+                      )}
+                      
+                      {data.logo && <div className="watermark" style={{ backgroundImage: `url(${data.logo})` }} />}
+                      
+                      <div className="slide-logo">
+                        <div 
+                          className="logo-circle" 
+                          style={{ 
+                            backgroundImage: data.logo ? `url(${data.logo})` : 'none',
+                            backgroundColor: data.logo ? 'transparent' : data.colorPrimary
+                          }} 
+                        >
+                          {!data.logo && <span className="logo-initial">{data.brandName.charAt(0)}</span>}
+                        </div>
+                        <div className="logo-text">{data.brandName}</div>
+                      </div>
+                      
+                      <span className="slide-tag">{slide.tag}</span>
+                      <h2 className="slide-title whitespace-pre-wrap">{slide.title}</h2>
+                      <p className="slide-text max-w-[800px] leading-relaxed">{slide.desc}</p>
+                      
+                      {/* Barra de Progresso */}
+                      <div className="progress-bar">
+                        <div className="progress-track">
+                          <div className="progress-fill" style={{ width: `${progressPct}%` }} />
+                        </div>
+                        <span className="progress-label">{idx + 1}/{data.slides.length}</span>
+                      </div>
+                      
+                      {/* Seta de Arraste (não mostra no último slide) */}
+                      {!isLast && (
+                        <div className="swipe-arrow">
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  
-                  <span className="slide-tag">{data.heroTag}</span>
-                  <h2 className="slide-title whitespace-pre-wrap">{data.heroTitle}</h2>
-                  <p className="slide-text max-w-[800px] leading-relaxed">{data.heroDesc}</p>
-                </div>
-              </div>
-
-              {/* SLIDE 2 (DARK) */}
-              <div className="slide-wrapper relative w-[540px] h-[675px] shrink-0 overflow-hidden shadow-2xl rounded-sm">
-                <div className="slide slide-dark" style={{ transform: 'scale(0.5)', transformOrigin: 'top left' }}>
-                  {data.logo && <div className="watermark" style={{ backgroundImage: `url(${data.logo})` }} />}
-                  <div className="slide-logo">
-                    <div className="logo-circle" style={{ backgroundImage: data.logo ? `url(${data.logo})` : 'none' }} />
-                    <div className="logo-text">1. O Início</div>
-                  </div>
-                  
-                  <div className="mt-auto mb-10">
-                    <span className="slide-tag">{data.slide2Tag}</span>
-                    <h2 className="slide-title whitespace-pre-wrap text-[74px]">{data.slide2Title}</h2>
-                    <p className="slide-text max-w-[800px] leading-relaxed">{data.slide2Desc}</p>
-                  </div>
-                </div>
-              </div>
-
+                );
+              })}
             </div>
           )}
         </div>
