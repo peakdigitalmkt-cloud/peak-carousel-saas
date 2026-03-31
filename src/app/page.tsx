@@ -4,49 +4,46 @@ import React, { useState, useRef } from 'react';
 import { toPng } from 'html-to-image';
 import { Download, Sparkles, Link2, Loader2 } from 'lucide-react';
 
-interface SlideStyle {
-  backgroundColor: string;
-  textColor: string;
-  accentColor: string;
-  gradient: string | null;
+interface SlideColors {
+  bg: string;
+  text: string;
+  accent: string;
 }
 
 interface SlideContent {
-  tagline: string;
   title: string;
-  description: string;
-  footer: string;
+  subtitle: string;
+  body: string;
+  tag: string;
 }
 
 interface SlideVisuals {
   icon: string;
-  shape: 'circle' | 'square' | 'blob';
   opacity: number;
 }
 
 interface Slide {
-  index: number;
-  type: 'cover' | 'content' | 'highlight' | 'cta';
-  layout: 'centered' | 'split_left' | 'split_right' | 'grid';
-  style: SlideStyle;
+  id: number;
+  type: 'cover' | 'content' | 'cta';
+  layout: 'centered' | 'split' | 'full';
+  colors: SlideColors;
   content: SlideContent;
   visuals: SlideVisuals;
 }
 
-interface CarouselMetadata {
-  themeName: string;
-  mainFont: string;
-  secondaryFont: string;
-  totalSlides: number;
+interface CarouselConfig {
+  theme: string;
+  primaryColor: string;
+  font: string;
 }
 
 interface CarouselData {
-  metadata: CarouselMetadata;
+  config: CarouselConfig;
   slides: Slide[];
 }
 
 const EMPTY_STATE: CarouselData = {
-  metadata: { themeName: '', mainFont: '', secondaryFont: '', totalSlides: 0 },
+  config: { theme: '', primaryColor: '', font: '' },
   slides: [],
 };
 
@@ -116,7 +113,7 @@ export default function Home() {
       
       if (aiResult.slides && Array.isArray(aiResult.slides)) {
         setCarousel({
-          metadata: aiResult.metadata || { themeName: 'Default', mainFont: 'Playfair Display', secondaryFont: 'DM Sans', totalSlides: aiResult.slides.length },
+          config: aiResult.config || { theme: 'Default', primaryColor: '#3b82f6', font: 'DM Sans' },
           slides: aiResult.slides,
         });
       }
@@ -161,17 +158,11 @@ export default function Home() {
 
   const hasSlides = carousel.slides.length > 0;
 
-  const getSlideBg = (slide: Slide) => {
-    if (slide.style.gradient) return { background: slide.style.gradient };
-    return { backgroundColor: slide.style.backgroundColor };
-  };
-
   const getLayoutClass = (layout: string) => {
     switch (layout) {
-      case 'centered': return 'slide-center';
-      case 'split_left': return 'slide-split-left';
-      case 'split_right': return 'slide-split-right';
-      case 'grid': return 'slide-grid';
+      case 'centered': return 'justify-center text-center items-center';
+      case 'split': return 'justify-end';
+      case 'full': return 'justify-between';
       default: return '';
     }
   };
@@ -186,7 +177,7 @@ export default function Home() {
           </div>
           <div>
             <h2 className="text-xl font-bold">Peak Carousel</h2>
-            <p className="text-xs text-[var(--text-muted)]">Design System AI</p>
+            <p className="text-xs text-[var(--text-muted)]">MiniMax AI</p>
           </div>
         </div>
 
@@ -224,7 +215,7 @@ export default function Home() {
           >
             {isLoading ? (
               <>
-                <Loader2 size={18} className="animate-spin" /> Gerando com IA...
+                <Loader2 size={18} className="animate-spin" /> Gerando com MiniMax AI...
               </>
             ) : (
               <>
@@ -240,9 +231,9 @@ export default function Home() {
               <p className="text-sm text-green-400 font-medium">
                 ✓ {carousel.slides.length} slides gerados
               </p>
-              {carousel.metadata.themeName && (
+              {carousel.config.theme && (
                 <p className="text-xs text-[var(--text-muted)] mt-1">
-                  Tema: {carousel.metadata.themeName}
+                  Tema: {carousel.config.theme}
                 </p>
               )}
             </div>
@@ -275,7 +266,7 @@ export default function Home() {
               Cole o link do Asana
             </h3>
             <p className="text-[var(--text-muted)] max-w-md">
-              A IA vai ler a tarefa, criar o design system e gerar o carrossel completo.
+              O MiniMax AI vai ler a tarefa, criar o design system e gerar o carrossel completo.
             </p>
           </div>
         ) : (
@@ -288,72 +279,70 @@ export default function Home() {
               return (
                 <div key={idx} className="relative shrink-0 w-[540px] h-[675px] rounded-[20px] shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden">
                   <div 
-                    className={`slide ${layoutClass}`}
+                    className={`slide flex flex-col p-20 ${layoutClass}`}
                     style={{ 
                       transform: 'scale(0.5)', 
                       transformOrigin: 'top left',
-                      ...getSlideBg(slide),
-                      color: slide.style.textColor,
-                      fontFamily: slide.type === 'cover' || slide.type === 'cta' 
-                        ? carousel.metadata.mainFont 
-                        : carousel.metadata.secondaryFont
+                      backgroundColor: slide.colors.bg,
+                      color: slide.colors.text,
+                      fontFamily: carousel.config.font,
+                      width: '1080px',
+                      height: '1350px',
+                      position: 'absolute',
+                      overflow: 'hidden'
                     }}
                   >
                     {/* Visual Element */}
-                    {slide.visuals.shape === 'circle' && (
+                    {slide.visuals.opacity > 0 && (
                       <div 
-                        className="absolute w-[400px] h-[400px] rounded-full opacity-20"
+                        className="absolute w-[500px] h-[500px] rounded-full"
                         style={{ 
-                          background: slide.style.accentColor,
-                          top: '10%',
-                          right: '-10%',
-                          opacity: slide.visuals.opacity
+                          background: slide.colors.accent,
+                          top: '5%',
+                          right: '-15%',
+                          opacity: slide.visuals.opacity,
+                          filter: 'blur(80px)'
                         }}
                       />
                     )}
                     
                     {/* Content */}
-                    <div className={layoutClass === 'slide-center' ? 'text-center items-center' : ''}>
-                      {slide.content.tagline && (
+                    <div className="relative z-10">
+                      {slide.content.tag && (
                         <span 
-                          className="text-xs font-bold tracking-[3px] uppercase mb-6 block"
-                          style={{ color: slide.style.accentColor }}
+                          className="text-sm font-bold tracking-[4px] uppercase mb-8 block"
+                          style={{ color: slide.colors.accent }}
                         >
-                          {slide.content.tagline}
+                          {slide.content.tag}
                         </span>
                       )}
                       
                       <h2 
                         className="font-bold mb-6 whitespace-pre-wrap"
                         style={{ 
-                          fontFamily: carousel.metadata.mainFont,
-                          fontSize: slide.type === 'cover' ? '84px' : '64px',
+                          fontSize: slide.type === 'cover' ? '72px' : '56px',
                           lineHeight: 1.1,
-                          letterSpacing: '-2px'
+                          letterSpacing: '-1px'
                         }}
                       >
                         {slide.content.title}
                       </h2>
                       
-                      {slide.content.description && (
+                      {slide.content.subtitle && (
                         <p 
-                          className="opacity-80 leading-relaxed"
-                          style={{ 
-                            fontFamily: carousel.metadata.secondaryFont,
-                            fontSize: '28px',
-                            maxWidth: '800px'
-                          }}
+                          className="text-xl mb-4 opacity-80"
+                          style={{ fontSize: '24px' }}
                         >
-                          {slide.content.description}
+                          {slide.content.subtitle}
                         </p>
                       )}
                       
-                      {slide.content.footer && (
+                      {slide.content.body && (
                         <p 
-                          className="mt-8 opacity-60 text-sm"
-                          style={{ fontFamily: carousel.metadata.secondaryFont }}
+                          className="opacity-70 leading-relaxed"
+                          style={{ fontSize: '20px', maxWidth: '700px' }}
                         >
-                          {slide.content.footer}
+                          {slide.content.body}
                         </p>
                       )}
                     </div>
@@ -361,10 +350,10 @@ export default function Home() {
                     {/* CTA Button */}
                     {slide.type === 'cta' && (
                       <div 
-                        className="mt-12 inline-flex items-center gap-3 px-10 py-5 rounded-full font-semibold text-lg"
+                        className="mt-12 inline-flex items-center gap-3 px-10 py-5 rounded-full font-semibold text-lg relative z-10"
                         style={{ 
-                          backgroundColor: slide.style.accentColor,
-                          color: slide.style.backgroundColor
+                          backgroundColor: slide.colors.accent,
+                          color: slide.colors.bg
                         }}
                       >
                         Agendar via WhatsApp →
@@ -372,22 +361,21 @@ export default function Home() {
                     )}
                     
                     {/* Progress Bar */}
-                    <div className="absolute bottom-0 left-0 right-0 px-8 py-6 flex items-center gap-4">
+                    <div className="absolute bottom-0 left-0 right-0 px-10 py-6 flex items-center gap-4">
                       <div 
                         className="flex-1 h-1 rounded-full overflow-hidden"
-                        style={{ backgroundColor: `${slide.style.textColor}15` }}
+                        style={{ backgroundColor: `${slide.colors.text}15` }}
                       >
                         <div 
                           className="h-full rounded-full"
                           style={{ 
                             width: `${progressPct}%`,
-                            backgroundColor: slide.style.accentColor
+                            backgroundColor: slide.colors.accent
                           }}
                         />
                       </div>
                       <span 
                         className="text-xs font-medium opacity-50"
-                        style={{ fontFamily: carousel.metadata.secondaryFont }}
                       >
                         {idx + 1}/{carousel.slides.length}
                       </span>
@@ -398,8 +386,8 @@ export default function Home() {
                       <div 
                         className="absolute right-0 top-0 bottom-0 w-20 flex items-center justify-center"
                         style={{ 
-                          background: `linear-gradient(to right, transparent, ${slide.style.textColor}08)`,
-                          color: `${slide.style.textColor}40`
+                          background: `linear-gradient(to right, transparent, ${slide.colors.text}08)`,
+                          color: `${slide.colors.text}40`
                         }}
                       >
                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none">

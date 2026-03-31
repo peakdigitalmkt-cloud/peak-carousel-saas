@@ -1,68 +1,49 @@
 import { NextResponse } from 'next/server';
 
-const CAROUSEL_SYSTEM_PROMPT = `Você é um Engenheiro de Design System especializado em automação de conteúdo para Instagram. Sua função é receber textos brutos e transformá-los em uma estrutura de dados JSON rigorosa para renderização de carrosséis profissionais.
+const CAROUSEL_SYSTEM_PROMPT = `Você é um Especialista em Design de Carrosséis para Instagram. Sua única função é transformar textos brutos em uma estrutura JSON técnica para renderização.
 
-### REGRAS DE OURO:
-1. PARSE INTELIGENTE: Identifique e extraia o conteúdo real, ignorando marcações como "Capa:", "Slide X:", "Título:".
-2. DESIGN DECISION: Você detém o controle criativo. Defina paletas de cores (HEX), fontes (Google Fonts), espaçamentos e variantes de layout.
-3. FORMATO ÚNICO: Responda EXCLUSIVAMENTE com o objeto JSON. Não inclua blocos de código (\`\`\`json), comentários ou introduções.
-4. COERÊNCIA: O tema (cores e fontes) deve ser consistente em todos os slides, mas o layout interno deve variar para evitar monotonia.
+### REGRAS CRÍTICAS:
+1. DECISÃO DE DESIGN: Você decide a paleta de cores (HEX), fontes e layout. Não peça permissão, apenas execute.
+2. LIMPEZA: Remova tags como "Capa:", "Slide:", "Descrição:". Entregue apenas o texto limpo dentro do JSON.
+3. FORMATO: Responda APENAS com o JSON. Sem introduções, sem "Aqui está o seu JSON", sem blocos de código markdown (\`\`\`json).
+4. VARIEDADE: Alterne layouts entre os slides (ex: texto à esquerda, texto centralizado, destaque) para manter o dinamismo.
 
-### SCHEMA JSON OBRIGATÓRIO:
+### ESTRUTURA DO JSON:
 {
-  "metadata": {
-    "themeName": "string",
-    "mainFont": "string",
-    "secondaryFont": "string",
-    "totalSlides": "number"
-  },
+  "config": { "theme": "string", "primaryColor": "HEX", "font": "string" },
   "slides": [
     {
-      "index": "number",
-      "type": "cover" | "content" | "highlight" | "cta",
-      "layout": "centered" | "split_left" | "split_right" | "grid",
-      "style": {
-        "backgroundColor": "HEX",
-        "textColor": "HEX",
-        "accentColor": "HEX",
-        "gradient": "string (CSS linear-gradient ou null)"
-      },
+      "id": number,
+      "type": "cover|content|cta",
+      "layout": "centered|split|full",
+      "colors": { "bg": "HEX", "text": "HEX", "accent": "HEX" },
       "content": {
-        "tagline": "string",
         "title": "string",
-        "description": "string",
-        "footer": "string"
+        "subtitle": "string",
+        "body": "string",
+        "tag": "string"
       },
-      "visuals": {
-        "icon": "string (nome de ícone Lucide)",
-        "shape": "circle" | "square" | "blob",
-        "opacity": "number (0-1)"
-      }
+      "visuals": { "icon": "string", "opacity": 0.5 }
     }
   ]
 }
 
-### REGRAS DE LAYOUT:
-- cover: slide inicial com título impactante, layout centered
-- content: slides de conteúdo com layout split_left ou split_right
-- highlight: slides de destaque com layout grid para listas
-- cta: slide final com chamada para ação, layout centered
-
-### REGRAS DE CORES:
-- Use cores harmoniosas (complementares ou análogas)
-- Varie os backgrounds entre slides (dark/light/accent)
-- Accent color deve ser consistente em todos os slides
-
-### MÍNIMO: 5 slides | MÁXIMO: 10 slides`;
+### REGRAS ADICIONAIS:
+- Mínimo 5 slides, máximo 10 slides
+- Primeiro slide SEMPRE do tipo "cover"
+- Último slide SEMPRE do tipo "cta"
+- Alternar layouts entre slides
+- Cores harmoniosas e profissionais
+- Textos curtos e impactantes`;
 
 export async function POST(req: Request) {
   try {
     const { text, context } = await req.json();
     
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.MINIMAX_API_KEY;
     
     if (!apiKey) {
-      return NextResponse.json({ error: 'Gemini API key não configurada no servidor' }, { status: 500 });
+      return NextResponse.json({ error: 'MiniMax API key não configurada no servidor' }, { status: 500 });
     }
     
     if (!text) {
@@ -72,36 +53,39 @@ export async function POST(req: Request) {
     const contextInfo = context ? `\n\nCONTEXTO ADICIONAL:\n${JSON.stringify(context)}` : '';
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      'https://api.minimax.chat/v1/text/chatcompletion_pro',
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
         body: JSON.stringify({
-          contents: [
+          model: 'abab6.5-chat',
+          messages: [
             {
-              parts: [
-                { text: CAROUSEL_SYSTEM_PROMPT },
-                { text: `=== TEXTO BRUTO ===\n\n${text}${contextInfo}` }
-              ]
+              role: 'system',
+              content: CAROUSEL_SYSTEM_PROMPT
+            },
+            {
+              role: 'user', 
+              content: `=== TEXTO BRUTO ===\n\n${text}${contextInfo}`
             }
           ],
-          generationConfig: {
-            temperature: 0.8,
-            topP: 0.9,
-            topK: 40,
-            responseMimeType: 'application/json'
-          }
+          temperature: 0.8,
+          top_p: 0.9
         })
       }
     );
 
     const data = await response.json();
     
-    if (data.error) {
-      return NextResponse.json({ error: data.error.message || 'Erro na API Gemini' }, { status: 500 });
+    if (data.error || data.base_resp?.status_code !== 0) {
+      const errorMsg = data.base_resp?.status_msg || data.error?.message || 'Erro na API MiniMax';
+      return NextResponse.json({ error: errorMsg }, { status: 500 });
     }
 
-    const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    const generatedText = data.reply;
     
     if (!generatedText) {
       return NextResponse.json({ error: 'Nenhuma resposta gerada' }, { status: 500 });
