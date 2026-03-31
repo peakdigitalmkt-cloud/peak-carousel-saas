@@ -120,37 +120,64 @@ export default function Home() {
 
       // Parse description to extract slides
       const notes = task.notes || '';
-      const slideSections = notes.split(/(?=Slide \d+:|SLIDE \d+:|^\d+\.)/i).filter((s: string) => s.trim());
+      
+      // Clean up notes - remove common prefixes/labels
+      const cleanNotes = notes
+        .replace(/^(Título:|TITULO:|Titulo:)\s*/gim, '')
+        .replace(/^(Subtítulo:|SUBTITULO:|Subtitulo:)\s*/gim, '')
+        .replace(/^(Descrição:|DESCRIÇÃO:|Descricao:)\s*/gim, '')
+        .replace(/^(Slide \d+:|SLIDE \d+:)\s*/gi, '');
+      
+      // Try to find structured format or split by paragraphs
+      const paragraphs = cleanNotes.split(/\n\n+/).filter((p: string) => p.trim());
+      const lines = cleanNotes.split('\n').filter((l: string) => l.trim());
       
       let extractedSlides: Slide[] = [];
       
-      if (slideSections.length > 1) {
-        // Parse structured slides from description
-        extractedSlides = slideSections.slice(0, 10).map((section: string, i: number) => {
-          const lines = section.split('\n').filter(l => l.trim());
-          const tagLine = lines[0] || '';
-          const title = lines[1] || tagLine.replace(/^(Slide \d+:|SLIDE \d+:|\d+\.)/i, '').trim() || `Slide ${i + 1}`;
-          const desc = lines.slice(2).join('\n') || lines.slice(1).join(' ');
-          return { tag: i === 0 ? 'GANCHO' : `SLIDE ${i + 1}`, title, desc };
+      if (paragraphs.length >= 2) {
+        // Multiple paragraphs = multiple slides
+        extractedSlides = paragraphs.slice(0, 10).map((p: string, i: number) => {
+          const cleanContent = p
+            .replace(/^(Slide \d+:|SLIDE \d+:|^\d+\.)\s*/gi, '')
+            .replace(/^(Título:|TITULO:|Titulo:)\s*/gim, '')
+            .replace(/^(Subtítulo:|SUBTITULO:|Subtitulo:)\s*/gim, '');
+          
+          const contentLines = cleanContent.split('\n');
+          const title = contentLines[0]?.substring(0, 60) || (i === 0 ? 'Gancho' : `Slide ${i + 1}`);
+          const subtitle = contentLines.slice(1).join(' ').substring(0, 200) || contentLines[0] || '';
+          
+          return { 
+            tag: i === 0 ? 'GANCHO' : `SLIDE ${i + 1}`, 
+            title, 
+            desc: subtitle 
+          };
         });
-      } else {
-        // Fallback: split by lines or paragraphs
-        const paragraphs = notes.split(/\n\n+/).filter((p: string) => p.trim());
-        extractedSlides = [
-          { tag: 'GANCHO', title: task.name, desc: paragraphs[0] || '' },
-          ...paragraphs.slice(1, 7).map((p: string, i: number) => {
-            const lines = p.split('\n');
-            return {
-              tag: `SLIDE ${i + 2}`,
-              title: lines[0]?.substring(0, 50) || `Slide ${i + 2}`,
-              desc: p
-            };
-          })
-        ];
+      } else if (lines.length >= 2) {
+        // Single paragraph with multiple lines = multiple slides
+        extractedSlides = lines.slice(0, 10).map((line: string, i: number) => {
+          const cleanLine = line
+            .replace(/^(Slide \d+:|SLIDE \d+:|^\d+\.)\s*/gi, '')
+            .replace(/^(Título:|TITULO:|Titulo:)\s*/gim, '')
+            .replace(/^(Subtítulo:|SUBTITULO:|Subtitulo:)\s*/gim, '')
+            .trim();
+          
+          return { 
+            tag: i === 0 ? 'GANCHO' : `SLIDE ${i + 1}`, 
+            title: cleanLine.substring(0, 60), 
+            desc: cleanLine 
+          };
+        });
       }
       
+      // If nothing extracted, use default
       if (extractedSlides.length === 0) {
-        extractedSlides = [...DEFAULT_SLIDES];
+        const firstLine = lines[0] || '';
+        const rest = lines.slice(1).join(' ').substring(0, 200);
+        extractedSlides = [
+          { tag: 'GANCHO', title: task.name, desc: rest || firstLine },
+          { tag: 'PROBLEMA', title: 'O problema', desc: 'Descreva o problema...' },
+          { tag: 'SOLUÇÃO', title: 'A solução', desc: 'Como resolver...' },
+        ];
       }
       
       setData({
@@ -436,7 +463,7 @@ export default function Home() {
                           />
                         </div>
                         <div>
-                          <label className="peak-ui-label text-xs">Descrição</label>
+                          <label className="peak-ui-label text-xs">Subtítulo</label>
                           <textarea 
                             value={slide.desc} 
                             onChange={e => {
@@ -480,20 +507,28 @@ export default function Home() {
           ) : (
             <div className="flex gap-10" ref={carouselRef} style={themeVars}>
               {data.slides.map((slide, idx) => {
-                const isLight = idx % 2 === 0;
+                const isFirst = idx === 0;
                 const isLast = idx === data.slides.length - 1;
+                const isGradient = isFirst || isLast;
                 const progressPct = ((idx + 1) / data.slides.length) * 100;
+                
+                // Alternância: hero (gradient), problema (dark), solução (gradient), recursos (light), detalhes (dark), como (light), cta (gradient)
+                const getSlideClass = () => {
+                  if (isFirst || isLast) return 'slide-gradient';
+                  if (idx % 2 === 0) return 'slide-light';
+                  return 'slide-dark';
+                };
                 
                 return (
                   <div key={idx} className="slide-wrapper relative w-[540px] h-[675px] shrink-0 overflow-hidden shadow-2xl rounded-sm">
                     <div 
-                      className={`slide ${isLight ? 'slide-light' : 'slide-dark'} ${idx === 0 ? 'slide-bottom' : ''}`} 
+                      className={`slide ${getSlideClass()} ${isFirst ? 'slide-bottom' : ''}`} 
                       style={{ transform: 'scale(0.5)', transformOrigin: 'top left' }}
                     >
-                      {idx === 0 && data.heroPhoto && (
+                      {isFirst && data.heroPhoto && (
                         <>
                           <div className="photo-mask" style={{ backgroundImage: `url(${data.heroPhoto})` }} />
-                          <div className={`photo-overlay-${isLight ? 'light' : 'dark'}`} />
+                          <div className="photo-overlay-dark" />
                         </>
                       )}
                       
@@ -514,7 +549,7 @@ export default function Home() {
                       
                       <span className="slide-tag">{slide.tag}</span>
                       <h2 className="slide-title whitespace-pre-wrap">{slide.title}</h2>
-                      <p className="slide-text max-w-[800px] leading-relaxed">{slide.desc}</p>
+                      <p className="slide-text max-w-[800px]">{slide.desc}</p>
                       
                       {/* Barra de Progresso */}
                       <div className="progress-bar">

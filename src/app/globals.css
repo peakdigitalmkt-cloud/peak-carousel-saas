@@ -12,12 +12,12 @@
     --accent: #3b82f6;
     --accent-hover: #2563eb;
     
-    /* Configurações padrão do Carrossel */
+    /* Configurações padrão do Carrossel - Paleta derivado da cor principal */
     --brand-primary: #1e3a5f;
     --brand-light: #8ed0f0;
     --brand-dark: #091a24;
     --light-bg: #f4f7f9;
-    --dark-bg: #091a24;
+    --dark-bg: #0f1215;
   }
 }
 
@@ -56,73 +56,86 @@ body {
   @apply inline-flex items-center justify-center gap-2 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white border-none px-6 py-3 rounded-lg font-semibold text-sm transition-all active:scale-95 cursor-pointer;
 }
 
-/* CARROSSEl (RENDER EXATO 1080x1350) */
+/* CARROSSEL (RENDER EXATO 1080x1350) - Estética Instagram */
 .slide {
   width: 1080px;
   height: 1350px;
   flex-shrink: 0;
   position: relative;
   box-sizing: border-box;
-  padding: 120px;
+  padding: 60px 80px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
-.slide-dark { background-color: var(--brand-dark); color: #fff; }
-.slide-light { background-color: var(--light-bg); color: var(--brand-dark); }
+.slide-dark { 
+  background-color: var(--brand-dark); 
+  color: #fff; 
+}
 
+.slide-light { 
+  background-color: var(--light-bg); 
+  color: var(--brand-dark); 
+}
+
+.slide-gradient {
+  background: linear-gradient(165deg, var(--brand-dark) 0%, var(--brand-primary) 50%, var(--brand-light) 100%);
+  color: #fff;
+}
+
+/* Noise texture sutil */
 .slide::before {
   content: '';
   position: absolute;
   inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  opacity: 0.04;
-  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.03;
   pointer-events: none;
   z-index: 1;
 }
-.slide-light::before { opacity: 0.08; mix-blend-mode: multiply; }
 
 .slide-center { justify-content: center; text-align: center; align-items: center; }
-.slide-bottom { justify-content: flex-end; padding-bottom: 80px; }
+.slide-bottom { justify-content: flex-end; padding-bottom: 60px; }
 
-/* Tipografia Editorial Vercel-ready */
+/* Tipografia conforme SKILL carrossel-instagram */
 .slide-tag {
   font-family: 'DM Sans', sans-serif;
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2px;
   text-transform: uppercase;
-  margin-bottom: 30px;
+  margin-bottom: 16px;
   color: var(--brand-light);
   display: inline-block;
   position: relative;
   z-index: 5;
 }
 .slide-light .slide-tag { color: var(--brand-primary); }
+.slide-gradient .slide-tag { color: rgba(255,255,255,0.6); }
 
 .slide-title {
   font-family: 'Playfair Display', serif;
-  font-size: 84px;
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -2px;
-  margin: 0 0 30px 0;
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.3px;
+  margin: 0 0 16px 0;
   position: relative;
   z-index: 5;
 }
 
 .slide-text {
   font-family: 'DM Sans', sans-serif;
-  font-size: 38px;
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.55;
   font-weight: 400;
   opacity: 0.85;
   position: relative;
   z-index: 5;
 }
 .slide-light .slide-text { opacity: 0.8; color: var(--brand-dark); }
+.slide-gradient .slide-text { color: rgba(255,255,255,0.7); }
 
 .photo-mask {
   position: absolute;
@@ -144,58 +157,75 @@ body {
   position: absolute;
   bottom: -50px;
   right: -50px;
-  width: 800px;
-  height: 800px;
+  width: 600px;
+  height: 600px;
   background-size: cover;
   background-position: center;
-  opacity: 0.03;
+  opacity: 0.04;
   z-index: 0;
   pointer-events: none;
 }
-.slide-light .watermark { opacity: 0.04; mix-blend-mode: multiply; }
+.slide-light .watermark { opacity: 0.03; mix-blend-mode: multiply; }
 
 .slide-logo {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   position: absolute;
-  top: 100px;
-  left: 120px;
+  top: 50px;
+  left: 80px;
   z-index: 10;
 }
 .logo-circle {
-  width: 70px;
-  height: 70px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background-color: var(--brand-primary);
   background-size: cover;
   background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .logo-text {
   font-family: 'DM Sans', sans-serif;
-  font-size: 22px;
+  font-size: 13px;
   font-weight: 600;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
+  color: inherit;
+}
+
+/* Logo com inicial */
+.logo-initial {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
 }
 
 .cta-button {
   display: inline-flex;
   align-items: center;
-  gap: 16px;
-  padding: 24px 50px;
+  gap: 12px;
+  padding: 14px 28px;
   background: var(--light-bg);
-  color: var(--brand-primary);
+  color: var(--brand-dark);
   font-family: 'DM Sans', sans-serif;
-  font-weight: 700;
-  font-size: 32px;
-  border-radius: 60px;
-  margin-top: 60px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: 28px;
+  margin-top: 20px;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.15);
   position: relative;
   z-index: 5;
 }
 
-/* Barra de Progresso */
+/* Barra de Progresso conforme SKILL */
 .progress-bar {
   position: absolute;
   bottom: 0;
@@ -208,42 +238,22 @@ body {
   gap: 10px;
 }
 
-.slide-light .progress-bar {
-  background: transparent;
-}
-
-.slide-dark .progress-bar {
-  background: transparent;
-}
-
 .progress-track {
   flex: 1;
   height: 3px;
   border-radius: 2px;
   overflow: hidden;
 }
-
-.slide-light .progress-track {
-  background: rgba(0,0,0,0.08);
-}
-
-.slide-dark .progress-track {
-  background: rgba(255,255,255,0.12);
-}
+.slide-light .progress-track { background: rgba(0,0,0,0.08); }
+.slide-dark .progress-track, .slide-gradient .progress-track { background: rgba(255,255,255,0.12); }
 
 .progress-fill {
   height: 100%;
   border-radius: 2px;
   transition: width 0.3s ease;
 }
-
-.slide-light .progress-fill {
-  background: var(--brand-primary);
-}
-
-.slide-dark .progress-fill {
-  background: #fff;
-}
+.slide-light .progress-fill { background: var(--brand-primary); }
+.slide-dark .progress-fill, .slide-gradient .progress-fill { background: #fff; }
 
 .progress-label {
   font-size: 11px;
@@ -252,16 +262,10 @@ body {
   min-width: 28px;
   text-align: right;
 }
+.slide-light .progress-label { color: rgba(0,0,0,0.3); }
+.slide-dark .progress-label, .slide-gradient .progress-label { color: rgba(255,255,255,0.4); }
 
-.slide-light .progress-label {
-  color: rgba(0,0,0,0.3);
-}
-
-.slide-dark .progress-label {
-  color: rgba(255,255,255,0.4);
-}
-
-/* Seta de Arraste */
+/* Seta de Arraste conforme SKILL */
 .swipe-arrow {
   position: absolute;
   right: 0;
@@ -273,28 +277,13 @@ body {
   align-items: center;
   justify-content: center;
 }
-
 .slide-light .swipe-arrow {
   background: linear-gradient(to right, transparent, rgba(0,0,0,0.06));
   color: rgba(0,0,0,0.25);
 }
-
-.slide-dark .swipe-arrow {
+.slide-dark .swipe-arrow, .slide-gradient .swipe-arrow {
   background: linear-gradient(to right, transparent, rgba(255,255,255,0.08));
   color: rgba(255,255,255,0.35);
-}
-
-/* Logo com inicial */
-.logo-initial {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 28px;
-  font-weight: 600;
-  color: #fff;
 }
 
 /* Photo overlay light */
