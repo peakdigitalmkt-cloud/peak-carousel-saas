@@ -2,13 +2,23 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { toPng } from 'html-to-image';
-import { Download, Upload, BriefcaseMedical, CheckCircle2, Link2, ChevronLeft, ChevronRight, Plus, X } from 'lucide-react';
+import { Download, Upload, BriefcaseMedical, CheckCircle2, Link2, ChevronLeft, ChevronRight, Plus, X, Sparkles } from 'lucide-react';
+
+interface Feature {
+  title: string;
+  desc: string;
+}
 
 interface Slide {
   tag: string;
   title: string;
   desc: string;
   photo?: string;
+  component?: 'quote-box' | 'feature-list' | 'glass-card' | 'pills' | 'cta';
+  features?: Feature[];
+  pills?: string[];
+  quote?: string;
+  quoteTag?: string;
 }
 
 interface CarouselData {
@@ -35,15 +45,20 @@ const DEFAULT_SLIDES: Slide[] = [
 export default function Home() {
   const [asanaUrl, setAsanaUrl] = useState('');
   const [asanaToken, setAsanaToken] = useState('');
+  const [geminiToken, setGeminiToken] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
   const [totalTabs, setTotalTabs] = useState(1);
   const [savedImages, setSavedImages] = useState<{logo: string[], photos: string[]}>({ logo: [], photos: [] });
+  const [isAiGenerating, setIsAiGenerating] = useState(false);
 
   React.useEffect(() => {
     const saved = localStorage.getItem('peak_asana_token');
     if (saved) setAsanaToken(saved);
+    
+    const gemini = localStorage.getItem('peak_gemini_token');
+    if (gemini) setGeminiToken(gemini);
     
     const savedImgs = localStorage.getItem('peak_saved_images');
     if (savedImgs) {
@@ -84,6 +99,38 @@ export default function Home() {
     localStorage.setItem('peak_saved_images', JSON.stringify(newImages));
   };
 
+  const generateWithAI = async (text: string) => {
+    if (!geminiToken) {
+      alert('Cole sua API Key do Gemini no campo abaixo primeiro.');
+      return null;
+    }
+    
+    localStorage.setItem('peak_gemini_token', geminiToken);
+    setIsAiGenerating(true);
+    
+    try {
+      const res = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, token: geminiToken })
+      });
+      
+      const result = await res.json();
+      setIsAiGenerating(false);
+      
+      if (result.error) {
+        alert(`Erro IA: ${result.error}`);
+        return null;
+      }
+      
+      return result.slides || result;
+    } catch (err) {
+      setIsAiGenerating(false);
+      alert('Erro ao conectar com a API Gemini.');
+      return null;
+    }
+  };
+
   const fetchAsanaTask = async () => {
     if (!asanaUrl) return alert('Cole a URL da tarefa do Asana primeiro.');
     setIsLoading(true);
@@ -118,7 +165,21 @@ export default function Home() {
       const task = responseBody.data;
       if (!task) return alert('Tarefa não encontrada.');
 
-      // Parse description to extract slides
+      // Try AI generation first
+      if (geminiToken) {
+        const aiSlides = await generateWithAI(task.notes || task.name);
+        if (aiSlides && Array.isArray(aiSlides)) {
+          setData({
+            ...data,
+            brandName: task.name.split(' - ')[0] || 'Peak MKT',
+            slides: aiSlides,
+          });
+          setIsConnected(true);
+          return;
+        }
+      }
+      
+      // Fallback: manual parsing
       const notes = task.notes || '';
       
       // Clean up notes - remove common prefixes/labels
@@ -252,6 +313,17 @@ export default function Home() {
                 onChange={e => setAsanaToken(e.target.value)} 
                 className="peak-ui-input mb-4" 
                 placeholder="1/123456789..." 
+              />
+              
+              <label className="peak-ui-label flex items-center gap-2 mb-3">
+                <Sparkles size={16} /> API Key Gemini (IA - Grátis)
+              </label>
+              <input 
+                type="password"
+                value={geminiToken} 
+                onChange={e => setGeminiToken(e.target.value)} 
+                className="peak-ui-input mb-4" 
+                placeholder="AIza..." 
               />
               
               <label className="peak-ui-label flex items-center gap-2 mb-3">
@@ -582,25 +654,52 @@ export default function Home() {
                         <p className="slide-content-text max-w-[800px]">{slide.desc}</p>
                       </div>
                       
-                      {/* Quote Box (apenas slide 2) */}
-                      {idx === 1 && (
+                      {/* Componentes dinâmicos do slide */}
+                      {slide.component === 'quote-box' && (
+                        <div className="quote-box">
+                          <p className="quote-tag">{slide.quoteTag || 'Destaque'}</p>
+                          <p className="quote-text">"{slide.quote || 'Insira uma citação aqui...'}"</p>
+                        </div>
+                      )}
+                      
+                      {slide.component === 'feature-list' && slide.features && (
+                        <div className="feature-list" style={{ marginTop: 60 }}>
+                          {slide.features.map((f, fi) => (
+                            <div key={fi} className="feature-item">
+                              <div className="feature-icon">{String(fi + 1).padStart(2, '0')}</div>
+                              <div>
+                                <div className="feature-title">{f.title}</div>
+                                <div className="feature-desc">{f.desc}</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {slide.component === 'glass-card' && slide.pills && (
+                        <div className="glass-card" style={{ padding: 40 }}>
+                          {slide.pills.map((p, pi) => (
+                            <span key={pi} className="pill">{p}</span>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {slide.component === 'cta' && (
+                        <div className="cta-button">
+                          Agendar via WhatsApp →
+                        </div>
+                      )}
+                      
+                      {/* Fallback: quote box hardcoded para slide 2 se não tem componente */}
+                      {!slide.component && idx === 1 && (
                         <div className="quote-box">
                           <p className="quote-tag">Sinais de alerta</p>
                           <p className="quote-text">"Sua resposta pode estar aqui..."</p>
                         </div>
                       )}
                       
-                      {/* Glass Card com Pills (slide 5) */}
-                      {idx === 4 && (
-                        <div className="glass-card" style={{ padding: 40 }}>
-                          <span className="pill">Opção 1</span>
-                          <span className="pill">Opção 2</span>
-                          <span className="pill">Opção 3</span>
-                        </div>
-                      )}
-                      
-                      {/* Feature List (slides 4 e 6) */}
-                      {(idx === 3 || idx === 5) && (
+                      {/* Fallback: feature list hardcoded */}
+                      {!slide.component && (idx === 3 || idx === 5) && (
                         <div className="feature-list" style={{ marginTop: 60 }}>
                           <div className="feature-item">
                             <div className="feature-icon">{idx === 5 ? '👁️' : '01'}</div>
@@ -626,8 +725,17 @@ export default function Home() {
                         </div>
                       )}
                       
+                      {/* Fallback: glass card hardcoded */}
+                      {!slide.component && idx === 4 && (
+                        <div className="glass-card" style={{ padding: 40 }}>
+                          <span className="pill">Opção 1</span>
+                          <span className="pill">Opção 2</span>
+                          <span className="pill">Opção 3</span>
+                        </div>
+                      )}
+                      
                       {/* CTA Button (último slide) */}
-                      {isLast && (
+                      {isLast && !slide.component && (
                         <div className="cta-button">
                           Agendar via WhatsApp →
                         </div>
