@@ -562,7 +562,7 @@ export default function Home() {
                       {/* Seta de Arraste (não mostra no último slide) */}
                       {!isLast && (
                         <div className="swipe-arrow">
-                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                          <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
                             <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                         </div>

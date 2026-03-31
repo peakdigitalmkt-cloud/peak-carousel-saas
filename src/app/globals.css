@@ -56,14 +56,14 @@ body {
   @apply inline-flex items-center justify-center gap-2 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white border-none px-6 py-3 rounded-lg font-semibold text-sm transition-all active:scale-95 cursor-pointer;
 }
 
-/* CARROSSEL - Estética Profissional Instagram */
+/* CARROSSEL - Estética Profissional (Referência Dr Roberto) */
 .slide {
   width: 1080px;
   height: 1350px;
   flex-shrink: 0;
   position: relative;
   box-sizing: border-box;
-  padding: 100px;
+  padding: 120px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -80,32 +80,34 @@ body {
 }
 
 .slide-gradient {
-  background: linear-gradient(145deg, var(--brand-dark) 0%, var(--brand-primary) 60%, var(--brand-light) 100%);
+  background: linear-gradient(165deg, var(--brand-dark) 0%, var(--brand-primary) 50%, var(--brand-light) 100%);
   color: #fff;
 }
 
-/* Noise texture sutil */
+/* Noise texture */
 .slide::before {
   content: '';
   position: absolute;
   inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.04;
+  mix-blend-mode: overlay;
   pointer-events: none;
   z-index: 1;
 }
+.slide-light::before { opacity: 0.08; mix-blend-mode: multiply; }
 
 .slide-center { justify-content: center; text-align: center; align-items: center; }
-.slide-bottom { justify-content: flex-end; padding-bottom: 70px; }
+.slide-bottom { justify-content: flex-end; padding-bottom: 200px; }
 
-/* Tipografia profissional */
+/* Tipografia Profissional */
 .slide-tag {
   font-family: 'DM Sans', sans-serif;
-  font-size: 12px;
+  font-size: 24px;
   font-weight: 700;
-  letter-spacing: 3px;
+  letter-spacing: 6px;
   text-transform: uppercase;
-  margin-bottom: 24px;
+  margin-bottom: 30px;
   color: var(--brand-light);
   display: inline-block;
   position: relative;
@@ -116,25 +118,25 @@ body {
 
 .slide-title {
   font-family: 'Playfair Display', serif;
-  font-size: 48px;
+  font-size: 84px;
   font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: -1px;
-  margin: 0 0 24px 0;
+  line-height: 1.1;
+  letter-spacing: -2px;
+  margin: 0 0 30px 0;
   position: relative;
   z-index: 5;
 }
 
 .slide-text {
   font-family: 'DM Sans', sans-serif;
-  font-size: 18px;
-  line-height: 1.6;
+  font-size: 38px;
+  line-height: 1.5;
   font-weight: 400;
-  opacity: 0.9;
+  opacity: 0.85;
   position: relative;
   z-index: 5;
 }
-.slide-light .slide-text { opacity: 0.85; color: var(--brand-dark); }
+.slide-light .slide-text { opacity: 0.8; color: var(--brand-dark); }
 .slide-gradient .slide-text { color: rgba(255,255,255,0.8); }
 
 .photo-mask {
@@ -149,36 +151,42 @@ body {
 .photo-overlay-dark {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(9,26,36,0) 0%, rgba(9,26,36,0.85) 70%, rgba(9,26,36,1) 100%);
+  background: linear-gradient(180deg, rgba(9,26,36,0) 0%, rgba(9,26,36,0.95) 80%, rgba(9,26,36,1) 100%);
+  z-index: 1;
+}
+.photo-overlay-light {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(244,247,249,0) 0%, rgba(244,247,249,0.8) 80%, rgba(244,247,249,1) 100%);
   z-index: 1;
 }
 
 .watermark {
   position: absolute;
-  bottom: -30px;
-  right: -30px;
-  width: 500px;
-  height: 500px;
+  bottom: -50px;
+  right: -50px;
+  width: 800px;
+  height: 800px;
   background-size: cover;
   background-position: center;
   opacity: 0.03;
   z-index: 0;
   pointer-events: none;
 }
-.slide-light .watermark { opacity: 0.02; mix-blend-mode: multiply; }
+.slide-light .watermark { opacity: 0.04; mix-blend-mode: multiply; }
 
 .slide-logo {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
   position: absolute;
-  top: 60px;
-  left: 100px;
+  top: 100px;
+  left: 120px;
   z-index: 10;
 }
 .logo-circle {
-  width: 48px;
-  height: 48px;
+  width: 70px;
+  height: 70px;
   border-radius: 50%;
   background-color: var(--brand-primary);
   background-size: cover;
@@ -190,10 +198,9 @@ body {
 }
 .logo-text {
   font-family: 'DM Sans', sans-serif;
-  font-size: 14px;
+  font-size: 22px;
   font-weight: 600;
   letter-spacing: 1px;
-  text-transform: uppercase;
   color: inherit;
 }
 
@@ -205,24 +212,131 @@ body {
   align-items: center;
   justify-content: center;
   font-family: 'DM Sans', sans-serif;
-  font-size: 18px;
+  font-size: 28px;
   font-weight: 700;
   color: #fff;
 }
 
+/* Glass Card */
+.glass-card {
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 40px;
+  padding: 60px;
+  margin-top: 40px;
+  position: relative;
+  z-index: 5;
+}
+.slide-light .glass-card {
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Quote Box */
+.quote-box {
+  padding: 50px;
+  background: rgba(0,0,0,0.15);
+  border-radius: 30px;
+  border: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(12px);
+  position: relative;
+  z-index: 5;
+  margin-top: 40px;
+}
+.quote-tag {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 24px;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 20px;
+}
+.quote-text {
+  font-family: 'Playfair Display', serif;
+  font-size: 42px;
+  color: #fff;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+/* Feature List */
+.feature-list {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  margin-top: 50px;
+  position: relative;
+  z-index: 5;
+}
+.feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 36px;
+  padding-bottom: 40px;
+  border-bottom: 2px solid #e2e8ed;
+}
+.slide-dark .feature-item, .slide-gradient .feature-item {
+  border-bottom-color: rgba(255,255,255,0.1);
+}
+.feature-item:last-child { border-bottom: none; padding-bottom: 0; }
+
+.feature-icon {
+  font-size: 50px;
+  color: var(--brand-primary);
+  min-width: 60px;
+  text-align: center;
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 300;
+}
+.slide-dark .feature-icon, .slide-gradient .feature-icon { color: var(--brand-light); }
+
+.feature-title {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 36px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: inherit;
+}
+.feature-desc {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 28px;
+  color: rgba(0,0,0,0.6);
+  line-height: 1.5;
+}
+.slide-dark .feature-desc, .slide-gradient .feature-desc { color: rgba(255,255,255,0.7); }
+
+/* Pill */
+.pill {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 24px;
+  padding: 10px 24px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 40px;
+  color: var(--brand-light);
+  display: inline-block;
+  margin-top: 20px;
+  margin-right: 12px;
+}
+.slide-light .pill {
+  background: rgba(0,0,0,0.05);
+  color: var(--brand-primary);
+}
+
+/* CTA Button */
 .cta-button {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px 32px;
+  gap: 16px;
+  padding: 24px 50px;
   background: var(--light-bg);
   color: var(--brand-primary);
   font-family: 'DM Sans', sans-serif;
-  font-weight: 600;
-  font-size: 16px;
-  border-radius: 30px;
-  margin-top: 30px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  font-weight: 700;
+  font-size: 32px;
+  border-radius: 60px;
+  margin-top: 60px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
   position: relative;
   z-index: 5;
 }
@@ -233,39 +347,39 @@ body {
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 20px 36px 24px;
+  padding: 16px 36px 36px 36px;
   z-index: 10;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
 .progress-track {
   flex: 1;
-  height: 4px;
-  border-radius: 2px;
+  height: 8px;
+  border-radius: 4px;
   overflow: hidden;
 }
-.slide-light .progress-track { background: rgba(0,0,0,0.1); }
-.slide-dark .progress-track, .slide-gradient .progress-track { background: rgba(255,255,255,0.15); }
+.slide-light .progress-track { background: rgba(0,0,0,0.08); }
+.slide-dark .progress-track, .slide-gradient .progress-track { background: rgba(255,255,255,0.12); }
 
 .progress-fill {
   height: 100%;
-  border-radius: 2px;
+  border-radius: 4px;
   transition: width 0.3s ease;
 }
 .slide-light .progress-fill { background: var(--brand-primary); }
 .slide-dark .progress-fill, .slide-gradient .progress-fill { background: #fff; }
 
 .progress-label {
-  font-size: 12px;
+  font-size: 24px;
   font-weight: 600;
   font-family: 'DM Sans', sans-serif;
-  min-width: 32px;
+  min-width: 48px;
   text-align: right;
 }
 .slide-light .progress-label { color: rgba(0,0,0,0.4); }
-.slide-dark .progress-label, .slide-gradient .progress-label { color: rgba(255,255,255,0.5); }
+.slide-dark .progress-label, .slide-gradient .progress-label { color: rgba(255,255,255,0.4); }
 
 /* Seta de Arraste */
 .swipe-arrow {
@@ -273,25 +387,21 @@ body {
   right: 0;
   top: 0;
   bottom: 0;
-  width: 60px;
+  width: 96px;
   z-index: 9;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .slide-light .swipe-arrow {
-  background: linear-gradient(to right, transparent, rgba(0,0,0,0.05));
-  color: rgba(0,0,0,0.2);
+  background: linear-gradient(to right, transparent, rgba(0,0,0,0.06));
+  color: rgba(0,0,0,0.3);
 }
 .slide-dark .swipe-arrow, .slide-gradient .swipe-arrow {
-  background: linear-gradient(to right, transparent, rgba(255,255,255,0.06));
-  color: rgba(255,255,255,0.3);
+  background: linear-gradient(to right, transparent, rgba(255,255,255,0.08));
+  color: rgba(255,255,255,0.4);
 }
-
-/* Photo overlay light */
-.photo-overlay-light {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(244,247,249,0) 0%, rgba(244,247,249,0.7) 70%, rgba(244,247,249,1) 100%);
-  z-index: 1;
+.swipe-arrow svg {
+  width: 48px;
+  height: 48px;
 }
