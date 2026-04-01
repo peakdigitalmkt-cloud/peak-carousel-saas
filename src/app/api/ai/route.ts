@@ -63,7 +63,7 @@ export async function POST(req: Request) {
           'X-Title': 'Peak Carousel Generator'
         },
         body: JSON.stringify({
-          model: 'meta-llama/llama-3.1-8b-instruct:free',
+          model: 'google/gemma-2-9b-it:free',
           messages: [
             {
               role: 'system',
